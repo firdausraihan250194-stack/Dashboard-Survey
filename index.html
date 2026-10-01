@@ -16,7 +16,7 @@
       <p class="text-sm text-slate-400">Monitoring Antrean Prioritas & History Survey Real-Time</p>
     </div>
     <div class="flex items-center gap-4 mt-4 md:mt-0">
-      <span id="lastUpdate" class="text-xs text-slate-400">Last update: Loading...</span>
+      <span id="lastUpdate" class="text-xs text-slate-400">Memuat data...</span>
       <button onclick="loadAndProcessData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
         <i class="fa-solid fa-rotate"></i> Refresh
       </button>
@@ -104,9 +104,7 @@
   </section>
 
   <script>
-    // ID GOOGLE SHEET ANDA
     const SPREADSHEET_ID = "1eDjir-vg2lKK3l1osbtlwei_wyPw1nRp4u6gz518OTU";
-    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
 
     let globalActiveRequests = [];
     let globalHistoryRequests = [];
@@ -123,23 +121,40 @@
       return val;
     }
 
-    async function loadAndProcessData() {
-      try {
-        const response = await fetch(GVIZ_URL);
-        const text = await response.text();
-        
-        // Memotong pembungkus JSON Google Viz
-        const jsonString = text.substring(47, text.length - 2);
-        const data = JSON.parse(jsonString);
+    // Menggunakan teknik JSONP injection agar tidak terblokir CORS
+    function loadAndProcessData() {
+      document.getElementById('lastUpdate').innerText = "Memuat data...";
+      
+      const oldScript = document.getElementById('jsonpScript');
+      if (oldScript) oldScript.remove();
 
-        processGVizData(data.table.rows);
+      const script = document.createElement('script');
+      script.id = 'jsonpScript';
+      script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:handleGoogleVizResponse`;
+      
+      script.onerror = function() {
+        document.getElementById('lastUpdate').innerText = "Gagal! Pastikan file Sheet di-share Publik.";
+      };
+
+      document.body.appendChild(script);
+    }
+
+    // Callback otomatis yang dipanggil oleh Google Sheet
+    function handleGoogleVizResponse(response) {
+      try {
+        if (!response || !response.table || !response.table.rows) {
+          document.getElementById('lastUpdate').innerText = "Data tidak ditemukan!";
+          return;
+        }
+
+        processGVizData(response.table.rows);
         populateLocationFilter();
         renderDashboard();
 
         document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
-      } catch (error) {
-        console.error("Gagal mengambil data dari Google Sheets:", error);
-        document.getElementById('lastUpdate').innerText = "Gagal memuat data!";
+      } catch (err) {
+        console.error("Error processing data:", err);
+        document.getElementById('lastUpdate').innerText = "Gagal memproses data!";
       }
     }
 
@@ -248,10 +263,10 @@
       }
     }
 
-    // Refresh setiap 10 detik
+    // Auto Refresh tiap 10 detik
     setInterval(loadAndProcessData, 10000);
 
-    // Initial Load
+    // Initial Load saat halaman dibuka
     loadAndProcessData();
   </script>
 </body>
