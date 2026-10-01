@@ -76,13 +76,13 @@
 
   </div>
 
-  <!-- History Section -->
+  <!-- History Section (Semua Status) -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold text-blue-400">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey (Status: Done)
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey (Semua Status)
       </h2>
-      <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">Completed</span>
+      <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">All Records</span>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
@@ -107,7 +107,7 @@
     const SPREADSHEET_ID = "1eDjir-vg2lKK3l1osbtlwei_wyPw1nRp4u6gz518OTU";
 
     let globalActiveRequests = [];
-    let globalHistoryRequests = [];
+    let globalAllHistoryRequests = [];
 
     function formatDate(val) {
       if (!val) return '-';
@@ -119,6 +119,18 @@
         }
       }
       return val;
+    }
+
+    // Helper render badge warna status
+    function getStatusBadge(status) {
+      const s = (status || 'On Process').toString().trim();
+      if (s.toLowerCase() === 'done') {
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span>`;
+      } else if (s.toLowerCase() === 'pending') {
+        return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
+      } else {
+        return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+      }
     }
 
     function loadAndProcessData() {
@@ -158,25 +170,15 @@
 
     function processGVizData(rows) {
       globalActiveRequests = [];
-      globalHistoryRequests = [];
+      globalAllHistoryRequests = [];
 
       rows.forEach(r => {
         const c = r.c;
         if (!c) return;
 
-        // PEMETAAN PRESISI KOLOM BERDASARKAN GOOGLE SHEET TERBARU:
-        // Col A (0): Input Date
-        // Col C (2): Nama Customer (PT GALANG BINTANG, dll)
-        // Col H (7): Lokasi Project (Kota/Provinsi)
-        // Col I (8): Lokasi Project (Kabupaten)
-        // Col L (11): Request Tanggal Survey (2026-10-13, dll)
-        // Col M (12): Tanggal Survey Field
-        // Col N (13) atau O (14): Status Survey
-
         const customerName = c[2] ? c[2].v : '';
         if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') return;
 
-        // Cari status survey di kolom index 13 atau 14
         let statusSurveyVal = '';
         if (c[13] && c[13].v) statusSurveyVal = c[13].v.toString().trim();
         else if (c[14] && c[14].v) statusSurveyVal = c[14].v.toString().trim();
@@ -191,9 +193,11 @@
           statusSurvey: statusSurveyVal
         };
 
-        if (item.statusSurvey.toLowerCase() === 'done') {
-          globalHistoryRequests.push(item);
-        } else {
+        // Masukkan SEMUA data ke dalam history
+        globalAllHistoryRequests.push(item);
+
+        // Hanya data yang BUKAN 'Done' yang masuk ke antrean Top 10 Active
+        if (item.statusSurvey.toLowerCase() !== 'done') {
           globalActiveRequests.push(item);
         }
       });
@@ -201,7 +205,7 @@
 
     function populateLocationFilter() {
       const filterSelect = document.getElementById('filterLokasi');
-      const uniqueLocations = [...new Set(globalActiveRequests.map(i => i.kota).filter(Boolean))];
+      const uniqueLocations = [...new Set(globalAllHistoryRequests.map(i => i.kota).filter(Boolean))];
 
       filterSelect.innerHTML = '<option value="">Semua Lokasi / Kota</option>';
       uniqueLocations.forEach(loc => {
@@ -212,9 +216,13 @@
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
 
+      // Filter Data Active & History berdasarkan lokasi yang dipilih
       let filteredActive = globalActiveRequests;
+      let filteredHistory = globalAllHistoryRequests;
+
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
+        filteredHistory = filteredHistory.filter(i => i.kota === selectedLocation);
       }
 
       // 1. Top 10 Active Queue
@@ -231,7 +239,7 @@
             <td class="p-3 font-semibold text-white">${item.customer}</td>
             <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
             <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
-            <td class="p-3"><span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${item.statusSurvey || 'On Process'}</span></td>
+            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
         `).join('');
       }
@@ -260,19 +268,19 @@
         `).join('');
       }
 
-      // 3. History Requests (Done)
+      // 3. History Requests (Semua Status)
       const historyBody = document.getElementById('historyTableBody');
-      if (globalHistoryRequests.length === 0) {
-        historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey berstatus Done.</td></tr>`;
+      if (filteredHistory.length === 0) {
+        historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
       } else {
-        historyBody.innerHTML = globalHistoryRequests.map(item => `
-          <tr class="hover:bg-slate-700/50 text-slate-400 transition">
+        historyBody.innerHTML = filteredHistory.map(item => `
+          <tr class="hover:bg-slate-700/50 text-slate-300 transition">
             <td class="p-3">${formatDate(item.inputDate)}</td>
-            <td class="p-3 font-medium text-slate-200">${item.customer}</td>
+            <td class="p-3 font-medium text-white">${item.customer}</td>
             <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
             <td class="p-3">${formatDate(item.requestDate)}</td>
             <td class="p-3">${formatDate(item.surveyDateField)}</td>
-            <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span></td>
+            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
         `).join('');
       }
