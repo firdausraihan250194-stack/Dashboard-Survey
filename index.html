@@ -104,8 +104,8 @@
   </section>
 
   <script>
-    // URL WEB APP APPS SCRIPT ANDA SUDAH TERHUBUNG DI SINI
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6XLnIIC5BHchXZawsiyXd-GKP_S8l1o58JtnRAJDxKnUHBNDj4n0FTSIJgHpxRKF0/exec";
+    // URL APPS SCRIPT SUDAH DITAMBAHKAN PARAMETER action=getRawData
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6XLnIIC5BHchXZawsiyXd-GKP_S8l1o58JtnRAJDxKnUHBNDj4n0FTSIJgHpxRKF0/exec?action=getRawData";
 
     let globalActiveRequests = [];
     let globalHistoryRequests = [];
@@ -234,7 +234,7 @@
     // Auto-refresh data setiap 10 detik
     setInterval(loadAndProcessData, 10000);
 
-    // Load data pertama kali saat halaman dibuka
+    // Initial Load
     loadAndProcessData();
   </script>
 </body>
