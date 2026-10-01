@@ -121,7 +121,6 @@
       return val;
     }
 
-    // Menggunakan teknik JSONP injection agar tidak terblokir CORS
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
       
@@ -139,7 +138,6 @@
       document.body.appendChild(script);
     }
 
-    // Callback otomatis yang dipanggil oleh Google Sheet
     function handleGoogleVizResponse(response) {
       try {
         if (!response || !response.table || !response.table.rows) {
@@ -164,16 +162,33 @@
 
       rows.forEach(r => {
         const c = r.c;
-        if (!c || !c[1] || !c[1].v) return; // Abaikan jika Nama Customer kosong
+        if (!c) return;
+
+        // PEMETAAN PRESISI KOLOM BERDASARKAN GOOGLE SHEET TERBARU:
+        // Col A (0): Input Date
+        // Col C (2): Nama Customer (PT GALANG BINTANG, dll)
+        // Col H (7): Lokasi Project (Kota/Provinsi)
+        // Col I (8): Lokasi Project (Kabupaten)
+        // Col L (11): Request Tanggal Survey (2026-10-13, dll)
+        // Col M (12): Tanggal Survey Field
+        // Col N (13) atau O (14): Status Survey
+
+        const customerName = c[2] ? c[2].v : '';
+        if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') return;
+
+        // Cari status survey di kolom index 13 atau 14
+        let statusSurveyVal = '';
+        if (c[13] && c[13].v) statusSurveyVal = c[13].v.toString().trim();
+        else if (c[14] && c[14].v) statusSurveyVal = c[14].v.toString().trim();
 
         const item = {
           inputDate: c[0] ? (c[0].f || c[0].v) : '',
-          customer: c[1] ? c[1].v : '',
-          kota: c[6] ? c[6].v : '',       // Col G: Kota/Provinsi
-          kabupaten: c[7] ? c[7].v : '',  // Col H: Kabupaten
-          requestDate: c[10] ? (c[10].f || c[10].v) : '', // Col K: Request Tgl
-          surveyDateField: c[12] ? (c[12].f || c[12].v) : '', // Col M: Tgl Survey Field
-          statusSurvey: c[13] ? c[13].v.toString().trim() : '' // Col N: Status Survey
+          customer: customerName,
+          kota: c[7] ? c[7].v : '',       // Col H
+          kabupaten: c[8] ? c[8].v : '',  // Col I
+          requestDate: c[11] ? (c[11].f || c[11].v) : '', // Col L
+          surveyDateField: c[12] ? (c[12].f || c[12].v) : '', // Col M
+          statusSurvey: statusSurveyVal
         };
 
         if (item.statusSurvey.toLowerCase() === 'done') {
@@ -263,10 +278,7 @@
       }
     }
 
-    // Auto Refresh tiap 10 detik
     setInterval(loadAndProcessData, 10000);
-
-    // Initial Load saat halaman dibuka
     loadAndProcessData();
   </script>
 </body>
