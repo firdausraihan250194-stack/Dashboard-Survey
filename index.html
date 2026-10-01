@@ -16,7 +16,7 @@
       <p class="text-sm text-slate-400">Monitoring Antrean Prioritas & History Survey Real-Time</p>
     </div>
     <div class="flex items-center gap-4 mt-4 md:mt-0">
-      <span id="lastUpdate" class="text-xs text-slate-400">Last update: -</span>
+      <span id="lastUpdate" class="text-xs text-slate-400">Last update: Loading...</span>
       <button onclick="loadAndProcessData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
         <i class="fa-solid fa-rotate"></i> Refresh
       </button>
@@ -104,69 +104,63 @@
   </section>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6XLnIIC5BHchXZawsiyXd-GKP_S8l1o58JtnRAJDxKnUHBNDj4n0FTSIJgHpxRKF0/exec?action=getRawData";
+    // ID GOOGLE SHEET ANDA
+    const SPREADSHEET_ID = "1eDjir-vg2lKK3l1osbtlwei_wyPw1nRp4u6gz518OTU";
+    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
 
     let globalActiveRequests = [];
     let globalHistoryRequests = [];
 
-    // Helper merapikan tampilan Tanggal
-    function formatDate(dateVal) {
-      if (!dateVal) return '-';
-      const d = new Date(dateVal);
-      if (isNaN(d.getTime())) {
-        return dateVal.toString().split('T')[0];
+    function formatDate(val) {
+      if (!val) return '-';
+      if (typeof val === 'string' && val.startsWith('Date(')) {
+        const parts = val.match(/\d+/g);
+        if (parts) {
+          const date = new Date(parts[0], parts[1], parts[2]);
+          return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
       }
-      return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+      return val;
     }
 
     async function loadAndProcessData() {
       try {
-        const response = await fetch(APPS_SCRIPT_URL);
-        const data = await response.json();
+        const response = await fetch(GVIZ_URL);
+        const text = await response.text();
+        
+        // Memotong pembungkus JSON Google Viz
+        const jsonString = text.substring(47, text.length - 2);
+        const data = JSON.parse(jsonString);
 
-        processData(data);
+        processGVizData(data.table.rows);
         populateLocationFilter();
         renderDashboard();
 
         document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
       } catch (error) {
-        console.error("Gagal mengambil data dari Apps Script:", error);
+        console.error("Gagal mengambil data dari Google Sheets:", error);
+        document.getElementById('lastUpdate').innerText = "Gagal memuat data!";
       }
     }
 
-    function processData(rows) {
+    function processGVizData(rows) {
       globalActiveRequests = [];
       globalHistoryRequests = [];
 
-      if (!rows || rows.length <= 1) return;
-
-      // Abaikan baris header (Baris 1)
-      const rawRows = rows.slice(1);
-
-      rawRows.forEach(row => {
-        // Pemetaan Presisi Berdasarkan Kolom Google Sheet Anda:
-        // Col A (0): Input Date
-        // Col B (1): Nama Customer
-        // Col G (6): Lokasi Project (Kota / Provinsi)
-        // Col H (7): Lokasi Project (Kabupaten)
-        // Col K (10): Request Tanggal Survey
-        // Col M (12): Tanggal Survey (Field)
-        // Col N (13): Status Survey
+      rows.forEach(r => {
+        const c = r.c;
+        if (!c || !c[1] || !c[1].v) return; // Abaikan jika Nama Customer kosong
 
         const item = {
-          inputDate: row[0] || '',
-          customer: row[1] || '',
-          kota: row[6] || '',       
-          kabupaten: row[7] || '',  
-          requestDate: row[10] || '',
-          surveyDateField: row[12] || '',
-          statusSurvey: (row[13] || '').toString().trim()
+          inputDate: c[0] ? (c[0].f || c[0].v) : '',
+          customer: c[1] ? c[1].v : '',
+          kota: c[6] ? c[6].v : '',       // Col G: Kota/Provinsi
+          kabupaten: c[7] ? c[7].v : '',  // Col H: Kabupaten
+          requestDate: c[10] ? (c[10].f || c[10].v) : '', // Col K: Request Tgl
+          surveyDateField: c[12] ? (c[12].f || c[12].v) : '', // Col M: Tgl Survey Field
+          statusSurvey: c[13] ? c[13].v.toString().trim() : '' // Col N: Status Survey
         };
 
-        // Biarkan hanya baris yang memiliki Nama Customer
-        if (!item.customer) return;
-
-        // Pisahkan ke History jika Status Survey = "Done"
         if (item.statusSurvey.toLowerCase() === 'done') {
           globalHistoryRequests.push(item);
         } else {
@@ -188,13 +182,12 @@
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
 
-      // 1. Filter Data Active
       let filteredActive = globalActiveRequests;
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
       }
 
-      // Render Top 10 Active Customer Priority Queue
+      // 1. Top 10 Active Queue
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -213,7 +206,7 @@
         `).join('');
       }
 
-      // 2. Render Top 10 Lokasi Request
+      // 2. Top 10 Lokasi
       const locationCounts = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
@@ -237,7 +230,7 @@
         `).join('');
       }
 
-      // 3. Render History Requests (Done)
+      // 3. History Requests (Done)
       const historyBody = document.getElementById('historyTableBody');
       if (globalHistoryRequests.length === 0) {
         historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey berstatus Done.</td></tr>`;
@@ -255,7 +248,7 @@
       }
     }
 
-    // Auto-refresh setiap 10 detik
+    // Refresh setiap 10 detik
     setInterval(loadAndProcessData, 10000);
 
     // Initial Load
