@@ -76,11 +76,11 @@
 
   </div>
 
-  <!-- History Section (Semua Status) -->
+  <!-- History Section -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold text-blue-400">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey (Semua Status)
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey
       </h2>
       <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">All Records</span>
     </div>
@@ -89,6 +89,7 @@
         <thead class="bg-slate-700 text-slate-300 uppercase">
           <tr>
             <th class="p-3">Input Date</th>
+            <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Customer</th>
             <th class="p-3">Lokasi Project</th>
             <th class="p-3">Request Tanggal</th>
@@ -103,13 +104,43 @@
     </div>
   </section>
 
+  <!-- POPUP MODAL BREAKDOWN CUSTOMER LOKASI -->
+  <div id="locationModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+        <h3 id="modalTitle" class="text-lg font-bold text-emerald-400">Breakdown Customer</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto max-h-80">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
+            <tr>
+              <th class="p-2.5">#</th>
+              <th class="p-2.5">Nama Customer</th>
+              <th class="p-2.5">Marketing</th>
+              <th class="p-2.5">Request Tanggal</th>
+              <th class="p-2.5">Status</th>
+            </tr>
+          </thead>
+          <tbody id="modalTableBody" class="divide-y divide-slate-700">
+            <!-- Data breakdown disisipkan di sini -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="closeModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const SPREADSHEET_ID = "1eDjir-vg2lKK3l1osbtlwei_wyPw1nRp4u6gz518OTU";
 
     let globalActiveRequests = [];
     let globalAllHistoryRequests = [];
 
-    // Format tampilan tanggal
     function formatDate(val) {
       if (!val) return '';
       if (typeof val === 'string' && val.startsWith('Date(')) {
@@ -122,15 +153,11 @@
       return val;
     }
 
-    // Helper render badge warna status survey
     function getStatusBadge(status) {
       const s = (status || 'On Process').toString().trim();
-      
-      // Jika status berisi angka/hari (misal -12 hari), ganti otomatis jadi On Process
       if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
       }
-
       if (s.toLowerCase() === 'done') {
         return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span>`;
       } else if (s.toLowerCase() === 'pending') {
@@ -186,11 +213,9 @@
         const customerName = c[2] ? c[2].v : '';
         if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') return;
 
-        // Ambil Tanggal Survey Field (Col M / Index 12)
         let rawDateField = c[12] ? (c[12].f || c[12].v) : '';
         let formattedDateField = formatDate(rawDateField);
 
-        // Ambil Status Survey (Col L/Index 11 atau Col N/Index 13)
         let statusSurveyVal = 'On Process';
         if (c[11] && c[11].v && !c[11].v.toString().includes('202')) {
           statusSurveyVal = c[11].v.toString().trim();
@@ -200,18 +225,17 @@
 
         const item = {
           inputDate: c[0] ? (c[0].f || c[0].v) : '',
-          customer: customerName,
-          kota: c[7] ? c[7].v : '',       // Col H (Kota)
-          kabupaten: c[8] ? c[8].v : '',  // Col I (Kabupaten)
-          requestDate: c[11] ? (c[11].f || c[11].v) : '', // Col L (Request Tanggal)
-          surveyDateField: formattedDateField,            // Tanggal Survey Field
+          marketing: c[1] ? c[1].v : '-',                 // Col B: Nama Marketing
+          customer: customerName,                          // Col C: Nama Customer
+          kota: c[7] ? c[7].v : '',                        // Col H: Kota
+          kabupaten: c[8] ? c[8].v : '',                   // Col I: Kabupaten
+          requestDate: c[11] ? (c[11].f || c[11].v) : '',  // Col L: Request Tanggal
+          surveyDateField: formattedDateField,             // Col M: Tanggal Survey Field
           statusSurvey: statusSurveyVal
         };
 
-        // Masukkan semua data ke history
         globalAllHistoryRequests.push(item);
 
-        // Hanya data yang BUKAN 'Done' yang masuk ke antrean Top 10 Active
         if (item.statusSurvey.toLowerCase() !== 'done') {
           globalActiveRequests.push(item);
         }
@@ -258,15 +282,18 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi
-      const locationCounts = {};
+      // 2. Top 10 Lokasi dengan Tombol Klik Breakdown Customer
+      const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
-        locationCounts[locKey] = (locationCounts[locKey] || 0) + 1;
+        if (!locationMap[locKey]) {
+          locationMap[locKey] = [];
+        }
+        locationMap[locKey].push(item);
       });
 
-      const sortedLocations = Object.keys(locationCounts)
-        .map(key => ({ location: key, count: locationCounts[key] }))
+      const sortedLocations = Object.keys(locationMap)
+        .map(key => ({ location: key, count: locationMap[key].length, items: locationMap[key] }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
@@ -274,22 +301,22 @@
       if (sortedLocations.length === 0) {
         locList.innerHTML = `<li class="text-slate-500 text-xs">Belum ada data lokasi.</li>`;
       } else {
-        locList.innerHTML = sortedLocations.map(loc => `
-          <li class="flex justify-between items-center bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60">
+        locList.innerHTML = sortedLocations.map((loc, idx) => `
+          <li class="flex justify-between items-center bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition">
             <span class="text-slate-300 font-medium">${loc.location}</span>
-            <span class="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-xs">${loc.count} Request</span>
+            <button onclick="showLocationBreakdown('${encodeURIComponent(loc.location)}')" class="font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded text-xs transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-users text-[10px]"></i> ${loc.count} Request
+            </button>
           </li>
         `).join('');
       }
 
-      // 3. History Requests (Semua Status)
+      // 3. History Requests (Ditambahkan Kolom Nama Marketing)
       const historyBody = document.getElementById('historyTableBody');
       if (filteredHistory.length === 0) {
-        historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
       } else {
         historyBody.innerHTML = filteredHistory.map(item => {
-          // Jika tanggal survey field terisi, tampilkan tanggalnya.
-          // Jika kosong / bernilai '-', tampilkan badge Pending berwarna merah.
           let surveyFieldDisplay = item.surveyDateField && item.surveyDateField !== '-' && item.surveyDateField.toLowerCase() !== 'pending'
             ? `<span class="text-slate-200 font-medium">${item.surveyDateField}</span>`
             : `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
@@ -297,6 +324,7 @@
           return `
             <tr class="hover:bg-slate-700/50 text-slate-300 transition">
               <td class="p-3">${formatDate(item.inputDate)}</td>
+              <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
               <td class="p-3 font-medium text-white">${item.customer}</td>
               <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
               <td class="p-3">${formatDate(item.requestDate)}</td>
@@ -306,6 +334,39 @@
           `;
         }).join('');
       }
+    }
+
+    // Fungsi menampilkan Popup Modal Breakdown Customer per Lokasi
+    function showLocationBreakdown(encodedLocationKey) {
+      const locationKey = decodeURIComponent(encodedLocationKey);
+      
+      const filteredItems = globalActiveRequests.filter(item => {
+        const key = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
+        return key === locationKey;
+      });
+
+      document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-map-pin mr-2"></i>Detail Customer: ${locationKey}`;
+      
+      const modalBody = document.getElementById('modalTableBody');
+      if (filteredItems.length === 0) {
+        modalBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data.</td></tr>`;
+      } else {
+        modalBody.innerHTML = filteredItems.map((item, idx) => `
+          <tr class="hover:bg-slate-700/50 text-slate-300">
+            <td class="p-2.5 font-bold text-emerald-400">#${idx + 1}</td>
+            <td class="p-2.5 font-medium text-white">${item.customer}</td>
+            <td class="p-2.5 text-blue-300">${item.marketing}</td>
+            <td class="p-2.5">${formatDate(item.requestDate)}</td>
+            <td class="p-2.5">${getStatusBadge(item.statusSurvey)}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('locationModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('locationModal').classList.add('hidden');
     }
 
     setInterval(loadAndProcessData, 10000);
