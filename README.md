@@ -1,1 +1,241 @@
-# Dashboard-Survey
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Request Survey</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6">
+
+  <!-- Header Section -->
+  <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-blue-400">Dashboard Request Survey</h1>
+      <p class="text-sm text-slate-400">Monitoring Antrean Prioritas & History Survey Real-Time</p>
+    </div>
+    <div class="flex items-center gap-4 mt-4 md:mt-0">
+      <span id="lastUpdate" class="text-xs text-slate-400">Last update: -</span>
+      <button onclick="loadAndProcessData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <i class="fa-solid fa-rotate"></i> Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter Section -->
+  <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-8 flex flex-wrap gap-4 items-center">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-filter text-blue-400"></i>
+      <span class="font-semibold text-sm">Filter Lokasi (Kota):</span>
+    </div>
+    <select id="filterLokasi" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-2 rounded-lg border border-slate-600 focus:outline-none text-white">
+      <option value="">Semua Lokasi / Kota</option>
+    </select>
+  </section>
+
+  <!-- Main Grid Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Top 10 Active Priority Queue (2 Columns) -->
+    <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-amber-400">
+          <i class="fa-solid fa-list-ol mr-2"></i>Top 10 Priority Request Survey
+        </h2>
+        <span class="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full border border-amber-500/30">Active Queue</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-700 text-slate-300 uppercase">
+            <tr>
+              <th class="p-3">#</th>
+              <th class="p-3">Input Date</th>
+              <th class="p-3">Nama Customer</th>
+              <th class="p-3">Lokasi Project</th>
+              <th class="p-3">Request Tanggal</th>
+              <th class="p-3">Status Survey</th>
+            </tr>
+          </thead>
+          <tbody id="top10TableBody" class="divide-y divide-slate-700">
+            <!-- Data dimasukkan via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top 10 Locations (1 Column) -->
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+      <h2 class="text-lg font-bold text-emerald-400 mb-4">
+        <i class="fa-solid fa-map-location-dot mr-2"></i>Top 10 Lokasi Request
+      </h2>
+      <ul id="locationList" class="space-y-3 text-sm">
+        <!-- Data dimasukkan via JS -->
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- History Section -->
+  <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold text-blue-400">
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey (Status: Done)
+      </h2>
+      <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">Completed</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-700 text-slate-300 uppercase">
+          <tr>
+            <th class="p-3">Input Date</th>
+            <th class="p-3">Nama Customer</th>
+            <th class="p-3">Lokasi Project</th>
+            <th class="p-3">Request Tanggal</th>
+            <th class="p-3">Tanggal Survey Field</th>
+            <th class="p-3">Status Survey</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody" class="divide-y divide-slate-700">
+          <!-- Data dimasukkan via JS -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    // URL WEB APP APPS SCRIPT ANDA SUDAH TERHUBUNG DI SINI
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6XLnIIC5BHchXZawsiyXd-GKP_S8l1o58JtnRAJDxKnUHBNDj4n0FTSIJgHpxRKF0/exec";
+
+    let globalActiveRequests = [];
+    let globalHistoryRequests = [];
+
+    async function loadAndProcessData() {
+      try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        const data = await response.json();
+
+        processData(data);
+        populateLocationFilter();
+        renderDashboard();
+
+        document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
+      } catch (error) {
+        console.error("Gagal mengambil data dari Apps Script:", error);
+      }
+    }
+
+    function processData(rows) {
+      globalActiveRequests = [];
+      globalHistoryRequests = [];
+
+      const rawRows = Array.isArray(rows[0]) ? rows.slice(1) : rows;
+
+      rawRows.forEach(row => {
+        const item = {
+          inputDate: row[0] || '',
+          customer: row[1] || '',
+          crmNo: row[2] || '',
+          kota: row[6] || '',       // Lokasi Project (Kota)
+          kabupaten: row[7] || '',  // Lokasi Project (Kabupaten)
+          requestDate: row[10] || '',
+          surveyDateField: row[12] || '',
+          statusSurvey: (row[13] || '').toString().trim()
+        };
+
+        if (item.statusSurvey.toLowerCase() === 'done') {
+          globalHistoryRequests.push(item);
+        } else {
+          globalActiveRequests.push(item);
+        }
+      });
+    }
+
+    function populateLocationFilter() {
+      const filterSelect = document.getElementById('filterLokasi');
+      const uniqueLocations = [...new Set(globalActiveRequests.map(i => i.kota).filter(Boolean))];
+
+      filterSelect.innerHTML = '<option value="">Semua Lokasi / Kota</option>';
+      uniqueLocations.forEach(loc => {
+        filterSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+      });
+    }
+
+    function renderDashboard() {
+      const selectedLocation = document.getElementById('filterLokasi').value;
+
+      // Filter Active Queue
+      let filteredActive = globalActiveRequests;
+      if (selectedLocation) {
+        filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
+      }
+
+      // 1. Render Top 10 Active Customer Priority Queue
+      const top10Active = filteredActive.slice(0, 10);
+      const top10Body = document.getElementById('top10TableBody');
+
+      if (top10Active.length === 0) {
+        top10Body.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
+      } else {
+        top10Body.innerHTML = top10Active.map((item, idx) => `
+          <tr class="hover:bg-slate-700/50 transition">
+            <td class="p-3 font-bold text-amber-400">#${idx + 1}</td>
+            <td class="p-3 text-slate-300">${item.inputDate ? new Date(item.inputDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3 font-semibold text-white">${item.customer}</td>
+            <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
+            <td class="p-3 text-slate-300">${item.requestDate ? new Date(item.requestDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3"><span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${item.statusSurvey || 'On Process'}</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // 2. Render Top 10 Lokasi Request
+      const locationCounts = {};
+      globalActiveRequests.forEach(item => {
+        const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
+        locationCounts[locKey] = (locationCounts[locKey] || 0) + 1;
+      });
+
+      const sortedLocations = Object.keys(locationCounts)
+        .map(key => ({ location: key, count: locationCounts[key] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      const locList = document.getElementById('locationList');
+      if (sortedLocations.length === 0) {
+        locList.innerHTML = `<li class="text-slate-500 text-xs">Belum ada data lokasi.</li>`;
+      } else {
+        locList.innerHTML = sortedLocations.map(loc => `
+          <li class="flex justify-between items-center bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60">
+            <span class="text-slate-300 font-medium">${loc.location}</span>
+            <span class="font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-xs">${loc.count} Request</span>
+          </li>
+        `).join('');
+      }
+
+      // 3. Render History Requests (Done)
+      const historyBody = document.getElementById('historyTableBody');
+      if (globalHistoryRequests.length === 0) {
+        historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey berstatus Done.</td></tr>`;
+      } else {
+        historyBody.innerHTML = globalHistoryRequests.map(item => `
+          <tr class="hover:bg-slate-700/50 text-slate-400 transition">
+            <td class="p-3">${item.inputDate ? new Date(item.inputDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3 font-medium text-slate-200">${item.customer}</td>
+            <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
+            <td class="p-3">${item.requestDate ? new Date(item.requestDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3">${item.surveyDateField ? new Date(item.surveyDateField).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // Auto-refresh data setiap 10 detik
+    setInterval(loadAndProcessData, 10000);
+
+    // Load data pertama kali saat halaman dibuka
+    loadAndProcessData();
+  </script>
+</body>
+</html>
