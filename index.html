@@ -109,8 +109,9 @@
     let globalActiveRequests = [];
     let globalAllHistoryRequests = [];
 
+    // Format tampilan tanggal
     function formatDate(val) {
-      if (!val) return '-';
+      if (!val) return '';
       if (typeof val === 'string' && val.startsWith('Date(')) {
         const parts = val.match(/\d+/g);
         if (parts) {
@@ -121,9 +122,15 @@
       return val;
     }
 
-    // Helper render badge warna status
+    // Helper render badge warna status survey
     function getStatusBadge(status) {
       const s = (status || 'On Process').toString().trim();
+      
+      // Jika status berisi angka/hari (misal -12 hari), ganti otomatis jadi On Process
+      if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
+        return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
+      }
+
       if (s.toLowerCase() === 'done') {
         return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span>`;
       } else if (s.toLowerCase() === 'pending') {
@@ -179,21 +186,29 @@
         const customerName = c[2] ? c[2].v : '';
         if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') return;
 
-        let statusSurveyVal = '';
-        if (c[13] && c[13].v) statusSurveyVal = c[13].v.toString().trim();
-        else if (c[14] && c[14].v) statusSurveyVal = c[14].v.toString().trim();
+        // Ambil Tanggal Survey Field (Col M / Index 12)
+        let rawDateField = c[12] ? (c[12].f || c[12].v) : '';
+        let formattedDateField = formatDate(rawDateField);
+
+        // Ambil Status Survey (Col L/Index 11 atau Col N/Index 13)
+        let statusSurveyVal = 'On Process';
+        if (c[11] && c[11].v && !c[11].v.toString().includes('202')) {
+          statusSurveyVal = c[11].v.toString().trim();
+        } else if (c[13] && c[13].v && !c[13].v.toString().includes('hari')) {
+          statusSurveyVal = c[13].v.toString().trim();
+        }
 
         const item = {
           inputDate: c[0] ? (c[0].f || c[0].v) : '',
           customer: customerName,
-          kota: c[7] ? c[7].v : '',       // Col H
-          kabupaten: c[8] ? c[8].v : '',  // Col I
-          requestDate: c[11] ? (c[11].f || c[11].v) : '', // Col L
-          surveyDateField: c[12] ? (c[12].f || c[12].v) : '', // Col M
+          kota: c[7] ? c[7].v : '',       // Col H (Kota)
+          kabupaten: c[8] ? c[8].v : '',  // Col I (Kabupaten)
+          requestDate: c[11] ? (c[11].f || c[11].v) : '', // Col L (Request Tanggal)
+          surveyDateField: formattedDateField,            // Tanggal Survey Field
           statusSurvey: statusSurveyVal
         };
 
-        // Masukkan SEMUA data ke dalam history
+        // Masukkan semua data ke history
         globalAllHistoryRequests.push(item);
 
         // Hanya data yang BUKAN 'Done' yang masuk ke antrean Top 10 Active
@@ -216,7 +231,6 @@
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
 
-      // Filter Data Active & History berdasarkan lokasi yang dipilih
       let filteredActive = globalActiveRequests;
       let filteredHistory = globalAllHistoryRequests;
 
@@ -273,16 +287,24 @@
       if (filteredHistory.length === 0) {
         historyBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
       } else {
-        historyBody.innerHTML = filteredHistory.map(item => `
-          <tr class="hover:bg-slate-700/50 text-slate-300 transition">
-            <td class="p-3">${formatDate(item.inputDate)}</td>
-            <td class="p-3 font-medium text-white">${item.customer}</td>
-            <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
-            <td class="p-3">${formatDate(item.requestDate)}</td>
-            <td class="p-3">${formatDate(item.surveyDateField)}</td>
-            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
-          </tr>
-        `).join('');
+        historyBody.innerHTML = filteredHistory.map(item => {
+          // Jika tanggal survey field terisi, tampilkan tanggalnya.
+          // Jika kosong / bernilai '-', tampilkan badge Pending berwarna merah.
+          let surveyFieldDisplay = item.surveyDateField && item.surveyDateField !== '-' && item.surveyDateField.toLowerCase() !== 'pending'
+            ? `<span class="text-slate-200 font-medium">${item.surveyDateField}</span>`
+            : `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
+
+          return `
+            <tr class="hover:bg-slate-700/50 text-slate-300 transition">
+              <td class="p-3">${formatDate(item.inputDate)}</td>
+              <td class="p-3 font-medium text-white">${item.customer}</td>
+              <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
+              <td class="p-3">${formatDate(item.requestDate)}</td>
+              <td class="p-3">${surveyFieldDisplay}</td>
+              <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
+            </tr>
+          `;
+        }).join('');
       }
     }
 
