@@ -27,7 +27,7 @@
   <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-8 flex flex-wrap gap-4 items-center">
     <div class="flex items-center gap-2">
       <i class="fa-solid fa-filter text-blue-400"></i>
-      <span class="font-semibold text-sm">Filter Lokasi (Kota):</span>
+      <span class="font-semibold text-sm">Filter Lokasi (Kota/Provinsi):</span>
     </div>
     <select id="filterLokasi" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-2 rounded-lg border border-slate-600 focus:outline-none text-white">
       <option value="">Semua Lokasi / Kota</option>
@@ -104,11 +104,20 @@
   </section>
 
   <script>
-    // URL APPS SCRIPT SUDAH DITAMBAHKAN PARAMETER action=getRawData
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6XLnIIC5BHchXZawsiyXd-GKP_S8l1o58JtnRAJDxKnUHBNDj4n0FTSIJgHpxRKF0/exec?action=getRawData";
 
     let globalActiveRequests = [];
     let globalHistoryRequests = [];
+
+    // Helper merapikan tampilan Tanggal
+    function formatDate(dateVal) {
+      if (!dateVal) return '-';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) {
+        return dateVal.toString().split('T')[0];
+      }
+      return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
 
     async function loadAndProcessData() {
       try {
@@ -129,20 +138,35 @@
       globalActiveRequests = [];
       globalHistoryRequests = [];
 
-      const rawRows = Array.isArray(rows[0]) ? rows.slice(1) : rows;
+      if (!rows || rows.length <= 1) return;
+
+      // Abaikan baris header (Baris 1)
+      const rawRows = rows.slice(1);
 
       rawRows.forEach(row => {
+        // Pemetaan Presisi Berdasarkan Kolom Google Sheet Anda:
+        // Col A (0): Input Date
+        // Col B (1): Nama Customer
+        // Col G (6): Lokasi Project (Kota / Provinsi)
+        // Col H (7): Lokasi Project (Kabupaten)
+        // Col K (10): Request Tanggal Survey
+        // Col M (12): Tanggal Survey (Field)
+        // Col N (13): Status Survey
+
         const item = {
           inputDate: row[0] || '',
           customer: row[1] || '',
-          crmNo: row[2] || '',
-          kota: row[6] || '',       // Lokasi Project (Kota)
-          kabupaten: row[7] || '',  // Lokasi Project (Kabupaten)
+          kota: row[6] || '',       
+          kabupaten: row[7] || '',  
           requestDate: row[10] || '',
           surveyDateField: row[12] || '',
           statusSurvey: (row[13] || '').toString().trim()
         };
 
+        // Biarkan hanya baris yang memiliki Nama Customer
+        if (!item.customer) return;
+
+        // Pisahkan ke History jika Status Survey = "Done"
         if (item.statusSurvey.toLowerCase() === 'done') {
           globalHistoryRequests.push(item);
         } else {
@@ -164,13 +188,13 @@
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
 
-      // Filter Active Queue
+      // 1. Filter Data Active
       let filteredActive = globalActiveRequests;
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
       }
 
-      // 1. Render Top 10 Active Customer Priority Queue
+      // Render Top 10 Active Customer Priority Queue
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -180,10 +204,10 @@
         top10Body.innerHTML = top10Active.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 transition">
             <td class="p-3 font-bold text-amber-400">#${idx + 1}</td>
-            <td class="p-3 text-slate-300">${item.inputDate ? new Date(item.inputDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3 text-slate-300">${formatDate(item.inputDate)}</td>
             <td class="p-3 font-semibold text-white">${item.customer}</td>
             <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
-            <td class="p-3 text-slate-300">${item.requestDate ? new Date(item.requestDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
             <td class="p-3"><span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${item.statusSurvey || 'On Process'}</span></td>
           </tr>
         `).join('');
@@ -220,18 +244,18 @@
       } else {
         historyBody.innerHTML = globalHistoryRequests.map(item => `
           <tr class="hover:bg-slate-700/50 text-slate-400 transition">
-            <td class="p-3">${item.inputDate ? new Date(item.inputDate).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3">${formatDate(item.inputDate)}</td>
             <td class="p-3 font-medium text-slate-200">${item.customer}</td>
             <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
-            <td class="p-3">${item.requestDate ? new Date(item.requestDate).toLocaleDateString('id-ID') : '-'}</td>
-            <td class="p-3">${item.surveyDateField ? new Date(item.surveyDateField).toLocaleDateString('id-ID') : '-'}</td>
+            <td class="p-3">${formatDate(item.requestDate)}</td>
+            <td class="p-3">${formatDate(item.surveyDateField)}</td>
             <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span></td>
           </tr>
         `).join('');
       }
     }
 
-    // Auto-refresh data setiap 10 detik
+    // Auto-refresh setiap 10 detik
     setInterval(loadAndProcessData, 10000);
 
     // Initial Load
