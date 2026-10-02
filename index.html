@@ -35,17 +35,17 @@
       </select>
     </div>
 
-    <!-- Filter Aplikasi Out (Tahun & Bulan) -->
+    <!-- Filter Aplikasi Out (Tahun & Bulan Breakdown) -->
     <div class="flex items-center gap-2">
       <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
       
-      <!-- Dropdown Tahun Dinamis -->
+      <!-- Dropdown Pilihan Tahun Breakdown -->
       <select id="filterTahunOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Semua Tahun</option>
       </select>
 
-      <!-- Dropdown Bulan Dinamis -->
+      <!-- Dropdown Pilihan Bulan Breakdown -->
       <select id="filterBulanOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Semua Bulan</option>
       </select>
@@ -95,7 +95,7 @@
         </div>
       </div>
       <div class="mt-4 pt-3 border-t border-slate-700/80 text-xs text-slate-400">
-        Debitur yang memenuhi syarat pengecualian survey.
+        Total debitur kategori pengecualian / non-survey.
       </div>
     </div>
 
@@ -111,7 +111,7 @@
         </div>
       </div>
       <div class="mt-4 pt-3 border-t border-slate-700/80 text-xs text-slate-400">
-        Antrean aktif yang sedang diproses oleh tim survey.
+        Antrean aktif dari tab Data Request yang sedang diproses.
       </div>
     </div>
 
@@ -226,6 +226,14 @@
     let globalAllHistoryRequests = [];
     let globalTrackingData = [];
 
+    // Pemetaan Bulan
+    const monthNamesIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const monthShortMap = {
+      "jan": "Januari", "feb": "Februari", "mar": "Maret", "apr": "April",
+      "mei": "Mei", "jun": "Juni", "jul": "Juli", "agu": "Agustus", "aug": "Agustus",
+      "sep": "September", "okt": "Oktober", "oct": "Oktober", "nov": "November", "des": "Desember", "dec": "Desember"
+    };
+
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(loadAndProcessData);
 
@@ -327,12 +335,20 @@
       const numRows = dataTable.getNumberOfRows();
 
       for (let i = 0; i < numRows; i++) {
-        // Kolom 1 = Nama Debitur
+        // Col 1 = Nama Debitur
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // Kolom 18 = Keterangan Survey / Status Survey di Sheet
-        const surveyCategory = dataTable.getValue(i, 18) || dataTable.getValue(i, 19) || 'Wajib Survey';
+        // Ambil Kategori Survey dari Col 18 atau Col 19
+        let catVal = dataTable.getValue(i, 18) || dataTable.getValue(i, 19) || 'Wajib Survey';
+        catVal = catVal.toString().trim();
+
+        // Flasifikasikan "Non Survey" fleksibel
+        let isNonSurvey = false;
+        const catLower = catVal.toLowerCase().replace(/[^a-z]/g, '');
+        if (catLower.includes('nonsurvey') || catLower.includes('nonsurvei') || catLower === 'non') {
+          isNonSurvey = true;
+        }
 
         // Tanggal Survey Kantor (Col 20) / Project (Col 21)
         const tglKantor = dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '';
@@ -344,16 +360,39 @@
         const appOutVal = dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '-';
         const bulanOutVal = dataTable.getFormattedValue(i, 27) || dataTable.getValue(i, 27) || '';
 
+        // Parsing Tahun dan Bulan dari string Aplikasi Out
+        let parsedYear = '';
+        let parsedMonth = '';
+
+        const strOut = (appOutVal + ' ' + bulanOutVal).trim();
+        
+        // Ekstrak 4 digit tahun (2024, 2025, 2026) atau 2 digit tahun ('24 -> 2024)
+        const yMatch = strOut.match(/20\d{2}/) || strOut.match(/-(2[3-9])/);
+        if (yMatch) {
+          parsedYear = yMatch[0].startsWith('-') ? '20' + yMatch[1] : yMatch[0];
+        }
+
+        // Ekstrak Bulan
+        for (const [key, fullMonth] of Object.entries(monthShortMap)) {
+          if (strOut.toLowerCase().includes(key)) {
+            parsedMonth = fullMonth;
+            break;
+          }
+        }
+
         const item = {
           debitur: debiturName,
           marketing: dataTable.getValue(i, 7) || '-',
-          kategoriSurvey: surveyCategory.toString().trim(),
+          isNonSurvey: isNonSurvey,
+          kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
           tglSurvey: formattedSurveyDate,
           statusSurvey: formattedSurveyDate ? 'Done' : 'Pending',
           kota: dataTable.getValue(i, 24) || '',
           provinsi: dataTable.getValue(i, 25) || '',
           aplikasiOut: appOutVal.toString().trim(),
-          bulanOut: bulanOutVal.toString().trim()
+          bulanOut: bulanOutVal.toString().trim(),
+          parsedYear: parsedYear,
+          parsedMonth: parsedMonth
         };
 
         globalTrackingData.push(item);
@@ -378,34 +417,22 @@
       const months = new Set();
 
       globalTrackingData.forEach(item => {
-        if (item.aplikasiOut && item.aplikasiOut !== '-') {
-          // Ekstrak Tahun (4 Digit atau 2 Digit)
-          const matchYear = item.aplikasiOut.match(/\d{2,4}/);
-          if (matchYear) {
-            let yr = matchYear[0];
-            if (yr.length === 2) yr = '20' + yr;
-            years.add(yr);
-          }
-
-          // Ekstrak Bulan (misal Jan, Feb, Mar, dll)
-          const matchMonth = item.aplikasiOut.match(/[A-Za-z]+/);
-          if (matchMonth) {
-            months.add(matchMonth[0]);
-          }
-        }
-        if (item.bulanOut) {
-          months.add(item.bulanOut);
-        }
+        if (item.parsedYear) years.add(item.parsedYear);
+        if (item.parsedMonth) months.add(item.parsedMonth);
       });
 
+      // Render Dropdown Tahun Breakdown
       filterTahunSelect.innerHTML = '<option value="">Semua Tahun</option>';
       Array.from(years).sort().reverse().forEach(yr => {
         filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
       });
 
+      // Render Dropdown Bulan Breakdown
       filterBulanSelect.innerHTML = '<option value="">Semua Bulan</option>';
-      Array.from(months).sort().forEach(m => {
-        filterBulanSelect.innerHTML += `<option value="${m}">${m}</option>`;
+      monthNamesIndo.forEach(m => {
+        if (months.has(m) || Array.from(months).length === 0) {
+          filterBulanSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        }
       });
     }
 
@@ -425,25 +452,29 @@
       }
 
       if (selectedTahun) {
-        filteredTracking = filteredTracking.filter(i => i.aplikasiOut.includes(selectedTahun) || i.aplikasiOut.includes(selectedTahun.slice(-2)));
+        filteredTracking = filteredTracking.filter(i => 
+          i.parsedYear === selectedTahun || 
+          i.aplikasiOut.includes(selectedTahun) || 
+          i.aplikasiOut.includes(selectedTahun.slice(-2))
+        );
       }
 
       if (selectedBulan) {
         filteredTracking = filteredTracking.filter(i => 
+          i.parsedMonth === selectedBulan ||
           i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase()) || 
           i.bulanOut.toLowerCase().includes(selectedBulan.toLowerCase())
         );
       }
 
-      // Perhitungan Angka Debitur Wajib & Non Survey
+      // Perhitungan Debitur Wajib & Non Survey
       let wajibTotal = 0;
       let wajibDone = 0;
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
       filteredTracking.forEach(t => {
-        const isNon = t.kategoriSurvey.toLowerCase().includes('non');
-        if (isNon) {
+        if (t.isNonSurvey) {
           nonSurveyTotal++;
         } else {
           wajibTotal++;
