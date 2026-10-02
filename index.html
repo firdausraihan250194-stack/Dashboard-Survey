@@ -40,34 +40,22 @@
       <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
       
-      <!-- Filter Tahun -->
+      <!-- Dropdown Tahun Dinamis -->
       <select id="filterTahunOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Semua Tahun</option>
       </select>
 
-      <!-- Filter Bulan -->
+      <!-- Dropdown Bulan Dinamis -->
       <select id="filterBulanOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Semua Bulan</option>
-        <option value="Jan">Januari</option>
-        <option value="Feb">Februari</option>
-        <option value="Mar">Maret</option>
-        <option value="Apr">April</option>
-        <option value="Mei">Mei</option>
-        <option value="Jun">Juni</option>
-        <option value="Jul">Juli</option>
-        <option value="Agu">Agustus</option>
-        <option value="Sep">September</option>
-        <option value="Okt">Oktober</option>
-        <option value="Nov">November</option>
-        <option value="Des">Desember</option>
       </select>
     </div>
   </section>
 
   <!-- Summary Cards Section -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     
-    <!-- Kartu Gabungan Debitur Wajib Survey (Completed & Pending) -->
+    <!-- Kartu Debitur Wajib Survey -->
     <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
       <div class="flex justify-between items-start">
         <div>
@@ -79,7 +67,6 @@
         </div>
       </div>
       
-      <!-- Keterangan Sub-Status dalam 1 Kolom Utama -->
       <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-700/80">
         <div class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20">
           <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
@@ -112,7 +99,7 @@
       </div>
     </div>
 
-    <!-- Kartu Total Registrasi Survey -->
+    <!-- Kartu Total Request Active -->
     <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
       <div class="flex justify-between items-start">
         <div>
@@ -133,7 +120,7 @@
   <!-- Main Grid Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
-    <!-- Top 10 Active Priority Queue (2 Columns) -->
+    <!-- Top 10 Active Priority Queue -->
     <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-amber-400">
@@ -154,19 +141,19 @@
             </tr>
           </thead>
           <tbody id="top10TableBody" class="divide-y divide-slate-700">
-            <!-- Data dimasukkan via JS -->
+            <!-- Render via JS -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Top 10 Locations (1 Column) -->
+    <!-- Top 10 Locations -->
     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
       <h2 class="text-lg font-bold text-emerald-400 mb-4">
         <i class="fa-solid fa-map-location-dot mr-2"></i>Top 10 Lokasi Request
       </h2>
       <ul id="locationList" class="space-y-3 text-sm">
-        <!-- Data dimasukkan via JS -->
+        <!-- Render via JS -->
       </ul>
     </div>
 
@@ -195,13 +182,13 @@
           </tr>
         </thead>
         <tbody id="historyTableBody" class="divide-y divide-slate-700">
-          <!-- Data dimasukkan via JS -->
+          <!-- Render via JS -->
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- POPUP MODAL BREAKDOWN CUSTOMER LOKASI -->
+  <!-- POPUP MODAL BREAKDOWN -->
   <div id="locationModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
@@ -222,7 +209,7 @@
             </tr>
           </thead>
           <tbody id="modalTableBody" class="divide-y divide-slate-700">
-            <!-- Data breakdown disisipkan di sini -->
+            <!-- Render via JS -->
           </tbody>
         </table>
       </div>
@@ -271,7 +258,7 @@
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Query 1: Data Request
+      // Query Tab 1: Data Request
       const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request`);
       q1.send(res1 => {
         if (!res1.isError()) {
@@ -281,7 +268,7 @@
         }
       });
 
-      // Query 2: Tracking Aplikasi
+      // Query Tab 2: Tracking Aplikasi
       const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi`);
       q2.send(res2 => {
         if (!res2.isError()) {
@@ -340,26 +327,33 @@
       const numRows = dataTable.getNumberOfRows();
 
       for (let i = 0; i < numRows; i++) {
+        // Kolom 1 = Nama Debitur
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
+        // Kolom 18 = Keterangan Survey / Status Survey di Sheet
+        const surveyCategory = dataTable.getValue(i, 18) || dataTable.getValue(i, 19) || 'Wajib Survey';
+
+        // Tanggal Survey Kantor (Col 20) / Project (Col 21)
         const tglKantor = dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '';
         const tglProject = dataTable.getFormattedValue(i, 21) || dataTable.getValue(i, 21) || '';
         const tglFix = tglProject || tglKantor || '';
         const formattedSurveyDate = formatDate(tglFix);
 
+        // Aplikasi Out (Col 26) & Bulan Out (Col 27)
         const appOutVal = dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '-';
+        const bulanOutVal = dataTable.getFormattedValue(i, 27) || dataTable.getValue(i, 27) || '';
 
         const item = {
           debitur: debiturName,
           marketing: dataTable.getValue(i, 7) || '-',
-          kategoriSurvey: dataTable.getValue(i, 19) || 'Wajib Survey',
+          kategoriSurvey: surveyCategory.toString().trim(),
           tglSurvey: formattedSurveyDate,
           statusSurvey: formattedSurveyDate ? 'Done' : 'Pending',
           kota: dataTable.getValue(i, 24) || '',
           provinsi: dataTable.getValue(i, 25) || '',
-          aplikasiOut: appOutVal,
-          bulanOut: dataTable.getValue(i, 27) || ''
+          aplikasiOut: appOutVal.toString().trim(),
+          bulanOut: bulanOutVal.toString().trim()
         };
 
         globalTrackingData.push(item);
@@ -378,22 +372,40 @@
 
     function populateAplikasiOutFilters() {
       const filterTahunSelect = document.getElementById('filterTahunOut');
+      const filterBulanSelect = document.getElementById('filterBulanOut');
+
       const years = new Set();
+      const months = new Set();
 
       globalTrackingData.forEach(item => {
         if (item.aplikasiOut && item.aplikasiOut !== '-') {
-          const match = item.aplikasiOut.match(/\d{2,4}/);
-          if (match) {
-            let yr = match[0];
+          // Ekstrak Tahun (4 Digit atau 2 Digit)
+          const matchYear = item.aplikasiOut.match(/\d{2,4}/);
+          if (matchYear) {
+            let yr = matchYear[0];
             if (yr.length === 2) yr = '20' + yr;
             years.add(yr);
           }
+
+          // Ekstrak Bulan (misal Jan, Feb, Mar, dll)
+          const matchMonth = item.aplikasiOut.match(/[A-Za-z]+/);
+          if (matchMonth) {
+            months.add(matchMonth[0]);
+          }
+        }
+        if (item.bulanOut) {
+          months.add(item.bulanOut);
         }
       });
 
       filterTahunSelect.innerHTML = '<option value="">Semua Tahun</option>';
-      Array.from(years).sort().forEach(yr => {
+      Array.from(years).sort().reverse().forEach(yr => {
         filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
+      });
+
+      filterBulanSelect.innerHTML = '<option value="">Semua Bulan</option>';
+      Array.from(months).sort().forEach(m => {
+        filterBulanSelect.innerHTML += `<option value="${m}">${m}</option>`;
       });
     }
 
@@ -417,17 +429,21 @@
       }
 
       if (selectedBulan) {
-        filteredTracking = filteredTracking.filter(i => i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase()) || i.bulanOut.toLowerCase().includes(selectedBulan.toLowerCase()));
+        filteredTracking = filteredTracking.filter(i => 
+          i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase()) || 
+          i.bulanOut.toLowerCase().includes(selectedBulan.toLowerCase())
+        );
       }
 
-      // Hitung Statistik Ringkasan
+      // Perhitungan Angka Debitur Wajib & Non Survey
       let wajibTotal = 0;
       let wajibDone = 0;
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
       filteredTracking.forEach(t => {
-        if (t.kategoriSurvey.toLowerCase().includes('non')) {
+        const isNon = t.kategoriSurvey.toLowerCase().includes('non');
+        if (isNon) {
           nonSurveyTotal++;
         } else {
           wajibTotal++;
@@ -445,7 +461,7 @@
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue Table
+      // 1. Top 10 Active Queue
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -464,7 +480,7 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi List
+      // 2. Top 10 Lokasi
       const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
