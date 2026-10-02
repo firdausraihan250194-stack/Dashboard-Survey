@@ -65,11 +65,14 @@
   <!-- Summary Cards Section -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     
-    <!-- Kartu Utama Penyatuan Debitur Wajib Survey & Non Survey -->
+    <!-- Kartu Utama Total Debitur Tracking Survey (Approve Only - Kolom AQ) -->
     <div class="md:col-span-2 bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
       <div class="flex justify-between items-start">
         <div>
-          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Debitur Tracking Survey</p>
+          <div class="flex items-center gap-2">
+            <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Debitur Tracking Survey</p>
+            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold px-2 py-0.5 rounded">Approve Only (Kolom AQ)</span>
+          </div>
           <h3 id="statTotalDebitur" class="text-3xl font-extrabold text-blue-400 mt-1">0</h3>
         </div>
         <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20 text-blue-400">
@@ -88,7 +91,7 @@
           <p id="statWajibDone" class="text-lg font-bold text-emerald-400 mt-0.5">0</p>
         </div>
 
-        <!-- Box Pending (Bisa di-klik untuk tampilkan Top 10 Terlama) -->
+        <!-- Box Pending (Clickable Modal Top 10) -->
         <div onclick="showPendingModal()" class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/30 hover:border-red-500/70 hover:bg-red-500/10 cursor-pointer transition group relative">
           <div class="flex items-center justify-between">
             <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-red-300">
@@ -235,7 +238,7 @@
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
         <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
-          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama
+          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama (Approve Only)
         </h3>
         <button onclick="closeModal('pendingModal')" class="text-slate-400 hover:text-white text-xl">
           <i class="fa-solid fa-xmark"></i>
@@ -380,6 +383,34 @@
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
+        // VERIFIKASI DECISION FINAL (APPROVE ONLY) - Kolom AQ (Index 42)
+        let decisionFinalVal = '';
+        if (42 < numCols) {
+          const val = dataTable.getValue(i, 42);
+          if (val) decisionFinalVal = val.toString().trim();
+        }
+
+        // Fallback jika posisi kolom bergeser di kisaran AQ (Kolom 40 - 43)
+        if (!decisionFinalVal) {
+          for (let dCol of [42, 41, 40, 43, 30]) {
+            if (dCol < numCols) {
+              const val = dataTable.getValue(i, dCol);
+              if (val) {
+                const str = val.toString().trim();
+                if (str.toLowerCase().includes('approve') || str.toLowerCase().includes('reject') || str.toLowerCase().includes('cancel')) {
+                  decisionFinalVal = str;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        // HANYA AMBIL DATA DENGAN DECISION FINAL APPROVE / APPROVED
+        if (!decisionFinalVal || !decisionFinalVal.toLowerCase().includes('approve')) {
+          continue; // Lewati jika bukan Approve / Approved
+        }
+
         let isNonSurvey = false;
         for (let colIdx of [18, 19, 20, 22, 23]) {
           if (colIdx < numCols) {
@@ -434,7 +465,6 @@
           }
         }
 
-        // Skor Urutan Waktu Aplikasi Out Terlama (Semakin kecil semakin tua)
         const sortScore = parseInt(parsedYear) * 100 + monthNum;
 
         const item = {
@@ -448,7 +478,8 @@
           provinsi: (25 < numCols) ? (dataTable.getValue(i, 25) || '') : '',
           aplikasiOut: strOut,
           parsedYear: parsedYear === '2099' ? '' : parsedYear,
-          sortScore: sortScore
+          sortScore: sortScore,
+          decisionFinal: decisionFinalVal || 'Approve'
         };
 
         globalTrackingData.push(item);
@@ -621,11 +652,8 @@
       }
     }
 
-    // Modal Top 10 Pending Terlama
     function showPendingModal() {
       const pendingItems = currentFilteredTracking.filter(i => i.statusSurvey === 'Pending' && !i.isNonSurvey);
-
-      // Urutkan berdasarkan Aplikasi Out Terlama (sortScore terkecil)
       const sortedPending = pendingItems.sort((a, b) => a.sortScore - b.sortScore).slice(0, 10);
 
       const modalBody = document.getElementById('pendingModalTableBody');
