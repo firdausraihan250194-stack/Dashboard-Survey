@@ -35,7 +35,7 @@
       </select>
     </div>
 
-    <!-- Filter Aplikasi Out (Tahun & 12 Bulan Breakdown berdasarkan Kolom AF) -->
+    <!-- Filter Aplikasi Out (Tahun & Bulan) -->
     <div class="flex items-center gap-2">
       <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
@@ -67,19 +67,20 @@
   <!-- Summary Cards Section -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     
-    <!-- Kartu Debitur Wajib Survey -->
-    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+    <!-- Kartu Utama Penyatuan Debitur Wajib Survey & Non Survey -->
+    <div class="md:col-span-2 bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
       <div class="flex justify-between items-start">
         <div>
-          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Debitur Wajib Survey</p>
-          <h3 id="statWajibTotal" class="text-3xl font-extrabold text-amber-400 mt-1">0</h3>
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Debitur Tracking Survey</p>
+          <h3 id="statTotalDebitur" class="text-3xl font-extrabold text-blue-400 mt-1">0</h3>
         </div>
-        <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 text-amber-400">
-          <i class="fa-solid fa-clipboard-list text-xl"></i>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20 text-blue-400">
+          <i class="fa-solid fa-users-rectangle text-xl"></i>
         </div>
       </div>
       
-      <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-700/80">
+      <!-- Sub-Box Status (Completed, Pending, Non Survey) -->
+      <div class="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-700/80">
         <div class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20">
           <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
             <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Completed (Done)
@@ -92,22 +93,12 @@
           </p>
           <p id="statWajibPending" class="text-lg font-bold text-red-400 mt-0.5">0</p>
         </div>
-      </div>
-    </div>
-
-    <!-- Kartu Debitur Non Survey -->
-    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Debitur Non Survey</p>
-          <h3 id="statNonSurvey" class="text-3xl font-extrabold text-slate-300 mt-1">0</h3>
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-500/20">
+          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-user-xmark text-slate-400 text-[10px]"></i> Non Survey
+          </p>
+          <p id="statNonSurvey" class="text-lg font-bold text-slate-300 mt-0.5">0</p>
         </div>
-        <div class="w-10 h-10 bg-slate-500/10 rounded-lg flex items-center justify-center border border-slate-500/20 text-slate-400">
-          <i class="fa-solid fa-user-xmark text-xl"></i>
-        </div>
-      </div>
-      <div class="mt-4 pt-3 border-t border-slate-700/80 text-xs text-slate-400">
-        Total debitur kategori pengecualian / non-survey.
       </div>
     </div>
 
@@ -116,9 +107,9 @@
       <div class="flex justify-between items-start">
         <div>
           <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Request Active</p>
-          <h3 id="statActiveTotal" class="text-3xl font-extrabold text-blue-400 mt-1">0</h3>
+          <h3 id="statActiveTotal" class="text-3xl font-extrabold text-amber-400 mt-1">0</h3>
         </div>
-        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20 text-blue-400">
+        <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 text-amber-400">
           <i class="fa-solid fa-list-check text-xl"></i>
         </div>
       </div>
@@ -187,9 +178,9 @@
             <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Debitur / Customer</th>
             <th class="p-3">Lokasi Project</th>
-            <th class="p-3">Aplikasi Out (Kolom AF)</th>
+            <th class="p-3">Aplikasi Out</th>
             <th class="p-3">Kategori Survey</th>
-            <th class="p-3">Tanggal Survey</th>
+            <th class="p-3">Tgl Survey Project (Col Z)</th>
             <th class="p-3">Status Survey</th>
           </tr>
         </thead>
@@ -258,20 +249,20 @@
       if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
       }
-      if (s.toLowerCase() === 'done') {
-        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Done</span>`;
+      if (s.toLowerCase() === 'done' || s.toLowerCase() === 'completed') {
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Completed</span>`;
       } else if (s.toLowerCase() === 'pending') {
         return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
       } else {
-        return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+        return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
       }
     }
 
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Query Tab 1: Data Request
-      const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request`);
+      // Query Tab 1: Data Request (Rentang A1:AZ5000)
+      const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&range=A1:AZ5000`);
       q1.send(res1 => {
         if (!res1.isError()) {
           processGVizDataRequest(res1.getDataTable());
@@ -280,8 +271,8 @@
         }
       });
 
-      // Query Tab 2: Tracking Aplikasi
-      const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi`);
+      // Query Tab 2: Tracking Aplikasi (Rentang A1:AZ5000 tanpa truncation)
+      const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&range=A1:AZ5000`);
       q2.send(res2 => {
         if (!res2.isError()) {
           processGVizTracking(res2.getDataTable());
@@ -340,13 +331,13 @@
       const numCols = dataTable.getNumberOfColumns();
 
       for (let i = 0; i < numRows; i++) {
-        // Col 1 = Nama Debitur
+        // Col 1 (Index 1) = Nama Debitur
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // Pengecekan Kategori Survey (Col 18, 19, 20, 22)
+        // Pengecekan Non Survey
         let isNonSurvey = false;
-        for (let colIdx of [22, 20, 19, 18, 21]) {
+        for (let colIdx of [18, 19, 20, 22, 23]) {
           if (colIdx < numCols) {
             const val = dataTable.getValue(i, colIdx);
             if (val) {
@@ -359,13 +350,25 @@
           }
         }
 
-        // Tanggal Survey Kantor (Col 20) / Project (Col 21)
-        const tglKantor = (20 < numCols) ? (dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '') : '';
-        const tglProject = (21 < numCols) ? (dataTable.getFormattedValue(i, 21) || dataTable.getValue(i, 21) || '') : '';
-        const tglFix = tglProject || tglKantor || '';
-        const formattedSurveyDate = formatDate(tglFix);
+        // PERBAIKAN POIN 3: Pengecekan Tanggal Survey Project - Kolom Z2 (Index 25)
+        let tglProjectVal = '';
+        if (25 < numCols) {
+          tglProjectVal = dataTable.getFormattedValue(i, 25) || dataTable.getValue(i, 25) || '';
+        }
 
-        // Aplikasi Out - KOLOM AF (Index 31) & AG (Index 32)
+        let formattedSurveyDate = formatDate(tglProjectVal);
+
+        // Penentuan Status: Completed jika Kolom Z terisi, Pending jika Kolom Z kosong
+        let computedStatus = 'Pending';
+        if (tglProjectVal && tglProjectVal.toString().trim() !== '' && tglProjectVal.toString().trim() !== '-') {
+          computedStatus = 'Completed';
+        }
+
+        if (isNonSurvey) {
+          computedStatus = 'Non Survey';
+        }
+
+        // Aplikasi Out (Kolom AF - Index 31 / AG - Index 32)
         let appOutVal = '';
         if (31 < numCols) {
           appOutVal = dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '';
@@ -375,7 +378,7 @@
         }
         if (!appOutVal) appOutVal = '-';
 
-        // Parsing Tahun dari string Aplikasi Out (Kolom AF)
+        // Parsing Tahun
         let parsedYear = '';
         const strOut = appOutVal.toString().trim();
         const yMatch = strOut.match(/202[3-9]/) || strOut.match(/-(2[3-9])/);
@@ -388,8 +391,8 @@
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
-          tglSurvey: formattedSurveyDate,
-          statusSurvey: formattedSurveyDate ? 'Done' : 'Pending',
+          tglSurveyProject: formattedSurveyDate || (computedStatus === 'Completed' ? tglProjectVal : '-'),
+          statusSurvey: computedStatus,
           kota: (24 < numCols) ? (dataTable.getValue(i, 24) || '') : '',
           provinsi: (25 < numCols) ? (dataTable.getValue(i, 25) || '') : '',
           aplikasiOut: strOut,
@@ -418,14 +421,12 @@
         if (item.parsedYear) years.add(item.parsedYear);
       });
 
-      // Jika tidak terurai, isi tahun default dari data Google Sheet (2024, 2025, 2026)
       if (years.size === 0) {
         years.add('2024');
         years.add('2025');
         years.add('2026');
       }
 
-      // Render Dropdown Tahun Breakdown (Pilihan Tahun Dinamis)
       filterTahunSelect.innerHTML = '<option value="">Tahun</option>';
       Array.from(years).sort().reverse().forEach(yr => {
         filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
@@ -461,8 +462,7 @@
         );
       }
 
-      // Perhitungan Debitur Wajib & Non Survey
-      let wajibTotal = 0;
+      // Perhitungan Angka Gabungan
       let wajibDone = 0;
       let wajibPending = 0;
       let nonSurveyTotal = 0;
@@ -471,8 +471,7 @@
         if (t.isNonSurvey) {
           nonSurveyTotal++;
         } else {
-          wajibTotal++;
-          if (t.statusSurvey.toLowerCase() === 'done') {
+          if (t.statusSurvey === 'Completed') {
             wajibDone++;
           } else {
             wajibPending++;
@@ -480,13 +479,15 @@
         }
       });
 
-      document.getElementById('statWajibTotal').innerText = wajibTotal;
+      const totalDebiturTracking = filteredTracking.length;
+
+      document.getElementById('statTotalDebitur').innerText = totalDebiturTracking;
       document.getElementById('statWajibDone').innerText = wajibDone;
       document.getElementById('statWajibPending').innerText = wajibPending;
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue
+      // 1. Top 10 Active Queue Table
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -543,7 +544,7 @@
             <td class="p-3">${item.provinsi || item.kota || '-'}</td>
             <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
             <td class="p-3">${item.kategoriSurvey}</td>
-            <td class="p-3">${item.tglSurvey ? `<span class="text-slate-200 font-medium">${item.tglSurvey}</span>` : `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px]">Pending</span>`}</td>
+            <td class="p-3 text-slate-200 font-medium">${item.tglSurveyProject}</td>
             <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
         `).join('');
