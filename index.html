@@ -35,17 +35,15 @@
       </select>
     </div>
 
-    <!-- Filter Aplikasi Out (Tahun & Bulan) -->
+    <!-- Filter Aplikasi Out -->
     <div class="flex items-center gap-2">
       <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
       
-      <!-- Dropdown Pilihan Tahun Breakdown -->
       <select id="filterTahunOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Tahun</option>
       </select>
 
-      <!-- Dropdown Pilihan 12 Bulan Breakdown -->
       <select id="filterBulanOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
         <option value="">Bulan</option>
         <option value="Jan">Januari</option>
@@ -79,26 +77,36 @@
         </div>
       </div>
       
-      <!-- Sub-Box Status (Completed, Pending, Non Survey) -->
+      <!-- Sub-Box Status (Completed, Pending CLICKABLE, Non Survey) -->
       <div class="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-700/80">
+        
+        <!-- Box Completed -->
         <div class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20">
           <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
             <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Completed (Done)
           </p>
           <p id="statWajibDone" class="text-lg font-bold text-emerald-400 mt-0.5">0</p>
         </div>
-        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/20">
-          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
-            <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i> Pending
-          </p>
+
+        <!-- Box Pending (Bisa di-klik untuk tampilkan Top 10 Terlama) -->
+        <div onclick="showPendingModal()" class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/30 hover:border-red-500/70 hover:bg-red-500/10 cursor-pointer transition group relative">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-red-300">
+              <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i> Pending
+            </p>
+            <span class="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded font-medium border border-red-500/30">Lihat Top 10</span>
+          </div>
           <p id="statWajibPending" class="text-lg font-bold text-red-400 mt-0.5">0</p>
         </div>
+
+        <!-- Box Non Survey -->
         <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-500/20">
           <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
             <i class="fa-solid fa-user-xmark text-slate-400 text-[10px]"></i> Non Survey
           </p>
           <p id="statNonSurvey" class="text-lg font-bold text-slate-300 mt-0.5">0</p>
         </div>
+
       </div>
     </div>
 
@@ -191,12 +199,12 @@
     </div>
   </section>
 
-  <!-- POPUP MODAL BREAKDOWN -->
+  <!-- POPUP MODAL BREAKDOWN LOKASI -->
   <div id="locationModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
         <h3 id="modalTitle" class="text-lg font-bold text-emerald-400">Breakdown Customer</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">
+        <button onclick="closeModal('locationModal')" class="text-slate-400 hover:text-white text-xl">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -217,7 +225,42 @@
         </table>
       </div>
       <div class="mt-4 flex justify-end">
-        <button onclick="closeModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
+        <button onclick="closeModal('locationModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP MODAL TOP 10 CUSTOMER PENDING TERLAMA -->
+  <div id="pendingModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+        <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama
+        </h3>
+        <button onclick="closeModal('pendingModal')" class="text-slate-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="overflow-x-auto max-h-96">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
+            <tr>
+              <th class="p-2.5">#</th>
+              <th class="p-2.5">Nama Debitur</th>
+              <th class="p-2.5">Marketing</th>
+              <th class="p-2.5">Lokasi</th>
+              <th class="p-2.5">Aplikasi Out</th>
+              <th class="p-2.5">Status</th>
+            </tr>
+          </thead>
+          <tbody id="pendingModalTableBody" class="divide-y divide-slate-700">
+            <!-- Render via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 flex justify-between items-center border-t border-slate-700/80 pt-3">
+        <span class="text-xs text-slate-400">* Diurutkan berdasarkan Tahun & Bulan Aplikasi Out terlama.</span>
+        <button onclick="closeModal('pendingModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
@@ -228,6 +271,7 @@
     let globalActiveRequests = [];
     let globalAllHistoryRequests = [];
     let globalTrackingData = [];
+    let currentFilteredTracking = [];
 
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(loadAndProcessData);
@@ -261,7 +305,7 @@
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Query Tab 1: Data Request (Rentang A1:AZ5000)
+      // Query Tab 1: Data Request
       const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&range=A1:AZ5000`);
       q1.send(res1 => {
         if (!res1.isError()) {
@@ -271,7 +315,7 @@
         }
       });
 
-      // Query Tab 2: Tracking Aplikasi (Rentang A1:AZ5000 tanpa truncation)
+      // Query Tab 2: Tracking Aplikasi
       const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&range=A1:AZ5000`);
       q2.send(res2 => {
         if (!res2.isError()) {
@@ -330,12 +374,12 @@
       const numRows = dataTable.getNumberOfRows();
       const numCols = dataTable.getNumberOfColumns();
 
+      const monthOrderMap = { "jan":1, "feb":2, "mar":3, "apr":4, "mei":5, "may":5, "jun":6, "jul":7, "agu":8, "aug":8, "sep":9, "okt":10, "oct":10, "nov":11, "des":12, "dec":12 };
+
       for (let i = 0; i < numRows; i++) {
-        // Col 1 (Index 1) = Nama Debitur
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // Pengecekan Non Survey
         let isNonSurvey = false;
         for (let colIdx of [18, 19, 20, 22, 23]) {
           if (colIdx < numCols) {
@@ -350,7 +394,6 @@
           }
         }
 
-        // PERBAIKAN POIN 3: Pengecekan Tanggal Survey Project - Kolom Z2 (Index 25)
         let tglProjectVal = '';
         if (25 < numCols) {
           tglProjectVal = dataTable.getFormattedValue(i, 25) || dataTable.getValue(i, 25) || '';
@@ -358,7 +401,6 @@
 
         let formattedSurveyDate = formatDate(tglProjectVal);
 
-        // Penentuan Status: Completed jika Kolom Z terisi, Pending jika Kolom Z kosong
         let computedStatus = 'Pending';
         if (tglProjectVal && tglProjectVal.toString().trim() !== '' && tglProjectVal.toString().trim() !== '-') {
           computedStatus = 'Completed';
@@ -368,7 +410,6 @@
           computedStatus = 'Non Survey';
         }
 
-        // Aplikasi Out (Kolom AF - Index 31 / AG - Index 32)
         let appOutVal = '';
         if (31 < numCols) {
           appOutVal = dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '';
@@ -378,13 +419,23 @@
         }
         if (!appOutVal) appOutVal = '-';
 
-        // Parsing Tahun
-        let parsedYear = '';
+        let parsedYear = '2099';
+        let monthNum = 12;
         const strOut = appOutVal.toString().trim();
         const yMatch = strOut.match(/202[3-9]/) || strOut.match(/-(2[3-9])/);
         if (yMatch) {
           parsedYear = yMatch[0].startsWith('-') ? '20' + yMatch[1] : yMatch[0];
         }
+
+        for (const [mKey, mVal] of Object.entries(monthOrderMap)) {
+          if (strOut.toLowerCase().includes(mKey)) {
+            monthNum = mVal;
+            break;
+          }
+        }
+
+        // Skor Urutan Waktu Aplikasi Out Terlama (Semakin kecil semakin tua)
+        const sortScore = parseInt(parsedYear) * 100 + monthNum;
 
         const item = {
           debitur: debiturName,
@@ -396,7 +447,8 @@
           kota: (24 < numCols) ? (dataTable.getValue(i, 24) || '') : '',
           provinsi: (25 < numCols) ? (dataTable.getValue(i, 25) || '') : '',
           aplikasiOut: strOut,
-          parsedYear: parsedYear
+          parsedYear: parsedYear === '2099' ? '' : parsedYear,
+          sortScore: sortScore
         };
 
         globalTrackingData.push(item);
@@ -440,16 +492,16 @@
 
       let filteredActive = globalActiveRequests;
       let filteredHistory = globalAllHistoryRequests;
-      let filteredTracking = globalTrackingData;
+      currentFilteredTracking = globalTrackingData;
 
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
         filteredHistory = filteredHistory.filter(i => i.kota === selectedLocation);
-        filteredTracking = filteredTracking.filter(i => i.kota === selectedLocation || i.provinsi === selectedLocation);
+        currentFilteredTracking = currentFilteredTracking.filter(i => i.kota === selectedLocation || i.provinsi === selectedLocation);
       }
 
       if (selectedTahun) {
-        filteredTracking = filteredTracking.filter(i => 
+        currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.parsedYear === selectedTahun || 
           i.aplikasiOut.includes(selectedTahun) || 
           i.aplikasiOut.includes(selectedTahun.slice(-2))
@@ -457,17 +509,16 @@
       }
 
       if (selectedBulan) {
-        filteredTracking = filteredTracking.filter(i => 
+        currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase())
         );
       }
 
-      // Perhitungan Angka Gabungan
       let wajibDone = 0;
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
-      filteredTracking.forEach(t => {
+      currentFilteredTracking.forEach(t => {
         if (t.isNonSurvey) {
           nonSurveyTotal++;
         } else {
@@ -479,9 +530,7 @@
         }
       });
 
-      const totalDebiturTracking = filteredTracking.length;
-
-      document.getElementById('statTotalDebitur').innerText = totalDebiturTracking;
+      document.getElementById('statTotalDebitur').innerText = currentFilteredTracking.length;
       document.getElementById('statWajibDone').innerText = wajibDone;
       document.getElementById('statWajibPending').innerText = wajibPending;
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
@@ -535,8 +584,8 @@
 
       // 3. History Table
       const historyBody = document.getElementById('historyTableBody');
-      if ((selectedTahun || selectedBulan) && filteredTracking.length > 0) {
-        historyBody.innerHTML = filteredTracking.map(item => `
+      if ((selectedTahun || selectedBulan) && currentFilteredTracking.length > 0) {
+        historyBody.innerHTML = currentFilteredTracking.map(item => `
           <tr class="hover:bg-slate-700/50 text-slate-300 transition">
             <td class="p-3 font-semibold text-slate-400">${item.aplikasiOut || '-'}</td>
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
@@ -572,6 +621,33 @@
       }
     }
 
+    // Modal Top 10 Pending Terlama
+    function showPendingModal() {
+      const pendingItems = currentFilteredTracking.filter(i => i.statusSurvey === 'Pending' && !i.isNonSurvey);
+
+      // Urutkan berdasarkan Aplikasi Out Terlama (sortScore terkecil)
+      const sortedPending = pendingItems.sort((a, b) => a.sortScore - b.sortScore).slice(0, 10);
+
+      const modalBody = document.getElementById('pendingModalTableBody');
+
+      if (sortedPending.length === 0) {
+        modalBody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-slate-500">Tidak ada debitur pending.</td></tr>`;
+      } else {
+        modalBody.innerHTML = sortedPending.map((item, idx) => `
+          <tr class="hover:bg-slate-700/50 text-slate-300">
+            <td class="p-2.5 font-bold text-red-400">#${idx + 1}</td>
+            <td class="p-2.5 font-semibold text-white">${item.debitur}</td>
+            <td class="p-2.5 text-blue-300">${item.marketing}</td>
+            <td class="p-2.5">${item.provinsi || item.kota || '-'}</td>
+            <td class="p-2.5 font-semibold text-emerald-400">${item.aplikasiOut}</td>
+            <td class="p-2.5">${getStatusBadge('Pending')}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('pendingModal').classList.remove('hidden');
+    }
+
     function showLocationBreakdown(encodedLocationKey) {
       const locationKey = decodeURIComponent(encodedLocationKey);
       const filteredItems = globalActiveRequests.filter(item => {
@@ -599,8 +675,8 @@
       document.getElementById('locationModal').classList.remove('hidden');
     }
 
-    function closeModal() {
-      document.getElementById('locationModal').classList.add('hidden');
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
     }
 
     setInterval(loadAndProcessData, 10000);
