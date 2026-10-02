@@ -6,6 +6,7 @@
   <title>Dashboard Request Survey</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6">
 
@@ -34,57 +35,99 @@
       </select>
     </div>
 
-    <!-- Filter Aplikasi Out -->
+    <!-- Filter Aplikasi Out (Tahun & Bulan) -->
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+      <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
-      <select id="filterAplikasiOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white ml-1">
-        <option value="">Semua Bulan / Aplikasi Out</option>
+      
+      <!-- Filter Tahun -->
+      <select id="filterTahunOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
+        <option value="">Semua Tahun</option>
+      </select>
+
+      <!-- Filter Bulan -->
+      <select id="filterBulanOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
+        <option value="">Semua Bulan</option>
+        <option value="Jan">Januari</option>
+        <option value="Feb">Februari</option>
+        <option value="Mar">Maret</option>
+        <option value="Apr">April</option>
+        <option value="Mei">Mei</option>
+        <option value="Jun">Juni</option>
+        <option value="Jul">Juli</option>
+        <option value="Agu">Agustus</option>
+        <option value="Sep">September</option>
+        <option value="Okt">Oktober</option>
+        <option value="Nov">November</option>
+        <option value="Des">Desember</option>
       </select>
     </div>
   </section>
 
-  <!-- Summary Cards Section (Tracking Aplikasi) -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-slate-400 font-medium">Debitur Wajib Survey</p>
-        <h3 id="statWajibSurvey" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+  <!-- Summary Cards Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    
+    <!-- Kartu Gabungan Debitur Wajib Survey (Completed & Pending) -->
+    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Debitur Wajib Survey</p>
+          <h3 id="statWajibTotal" class="text-3xl font-extrabold text-amber-400 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 text-amber-400">
+          <i class="fa-solid fa-clipboard-list text-xl"></i>
+        </div>
       </div>
-      <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 text-amber-400">
-        <i class="fa-solid fa-clipboard-list text-lg"></i>
+      
+      <!-- Keterangan Sub-Status dalam 1 Kolom Utama -->
+      <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-700/80">
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20">
+          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Completed (Done)
+          </p>
+          <p id="statWajibDone" class="text-lg font-bold text-emerald-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/20">
+          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i> Pending
+          </p>
+          <p id="statWajibPending" class="text-lg font-bold text-red-400 mt-0.5">0</p>
+        </div>
       </div>
     </div>
 
-    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-slate-400 font-medium">Debitur Non Survey</p>
-        <h3 id="statNonSurvey" class="text-2xl font-bold text-slate-300 mt-1">0</h3>
+    <!-- Kartu Debitur Non Survey -->
+    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Debitur Non Survey</p>
+          <h3 id="statNonSurvey" class="text-3xl font-extrabold text-slate-300 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 bg-slate-500/10 rounded-lg flex items-center justify-center border border-slate-500/20 text-slate-400">
+          <i class="fa-solid fa-user-xmark text-xl"></i>
+        </div>
       </div>
-      <div class="w-10 h-10 bg-slate-500/10 rounded-lg flex items-center justify-center border border-slate-500/20 text-slate-400">
-        <i class="fa-solid fa-user-xmark text-lg"></i>
-      </div>
-    </div>
-
-    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-slate-400 font-medium">Survey Completed (Done)</p>
-        <h3 id="statSurveyDone" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
-      </div>
-      <div class="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-        <i class="fa-solid fa-circle-check text-lg"></i>
+      <div class="mt-4 pt-3 border-t border-slate-700/80 text-xs text-slate-400">
+        Debitur yang memenuhi syarat pengecualian survey.
       </div>
     </div>
 
-    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-slate-400 font-medium">Survey Pending</p>
-        <h3 id="statSurveyPending" class="text-2xl font-bold text-red-400 mt-1">0</h3>
+    <!-- Kartu Total Registrasi Survey -->
+    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Request Active</p>
+          <h3 id="statActiveTotal" class="text-3xl font-extrabold text-blue-400 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20 text-blue-400">
+          <i class="fa-solid fa-list-check text-xl"></i>
+        </div>
       </div>
-      <div class="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400">
-        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+      <div class="mt-4 pt-3 border-t border-slate-700/80 text-xs text-slate-400">
+        Antrean aktif yang sedang diproses oleh tim survey.
       </div>
     </div>
+
   </div>
 
   <!-- Main Grid Section -->
@@ -196,6 +239,9 @@
     let globalAllHistoryRequests = [];
     let globalTrackingData = [];
 
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(loadAndProcessData);
+
     function formatDate(val) {
       if (!val) return '';
       if (typeof val === 'string' && val.startsWith('Date(')) {
@@ -222,66 +268,60 @@
       }
     }
 
-    // JSONP loader dua tab sekaligus
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Tab 1: Data Request
-      const s1 = document.createElement('script');
-      s1.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&tqx=responseHandler:handleDataRequestResponse`;
-      document.body.appendChild(s1);
+      // Query 1: Data Request
+      const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request`);
+      q1.send(res1 => {
+        if (!res1.isError()) {
+          processGVizDataRequest(res1.getDataTable());
+          populateLocationFilter();
+          renderDashboard();
+        }
+      });
 
-      // Tab 2: Tracking Aplikasi
-      const s2 = document.createElement('script');
-      s2.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&tqx=responseHandler:handleTrackingResponse`;
-      document.body.appendChild(s2);
+      // Query 2: Tracking Aplikasi
+      const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi`);
+      q2.send(res2 => {
+        if (!res2.isError()) {
+          processGVizTracking(res2.getDataTable());
+          populateAplikasiOutFilters();
+          renderDashboard();
+        }
+        document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
+      });
     }
 
-    function handleDataRequestResponse(response) {
-      if (response && response.table && response.table.rows) {
-        processGVizDataRequest(response.table.rows);
-        populateLocationFilter();
-        renderDashboard();
-      }
-    }
-
-    function handleTrackingResponse(response) {
-      if (response && response.table && response.table.rows) {
-        processGVizTracking(response.table.rows);
-        populateAplikasiOutFilter();
-        renderDashboard();
-      }
-      document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
-    }
-
-    function processGVizDataRequest(rows) {
+    function processGVizDataRequest(dataTable) {
       globalActiveRequests = [];
       globalAllHistoryRequests = [];
+      const numRows = dataTable.getNumberOfRows();
 
-      rows.forEach(r => {
-        const c = r.c;
-        if (!c) return;
+      for (let i = 0; i < numRows; i++) {
+        const customerName = dataTable.getValue(i, 2);
+        if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') continue;
 
-        const customerName = c[2] ? c[2].v : '';
-        if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') return;
-
-        let rawDateField = c[12] ? (c[12].f || c[12].v) : '';
-        let formattedDateField = formatDate(rawDateField);
+        const rawDateField = dataTable.getFormattedValue(i, 12) || dataTable.getValue(i, 12) || '';
+        const formattedDateField = formatDate(rawDateField);
 
         let statusSurveyVal = 'On Process';
-        if (c[11] && c[11].v && !c[11].v.toString().includes('202')) {
-          statusSurveyVal = c[11].v.toString().trim();
-        } else if (c[13] && c[13].v && !c[13].v.toString().includes('hari')) {
-          statusSurveyVal = c[13].v.toString().trim();
+        const val11 = dataTable.getValue(i, 11) ? dataTable.getValue(i, 11).toString() : '';
+        const val13 = dataTable.getValue(i, 13) ? dataTable.getValue(i, 13).toString() : '';
+
+        if (val11 && !val11.includes('202')) {
+          statusSurveyVal = val11.trim();
+        } else if (val13 && !val13.includes('hari')) {
+          statusSurveyVal = val13.trim();
         }
 
         const item = {
-          inputDate: c[0] ? (c[0].f || c[0].v) : '',
-          marketing: c[1] ? c[1].v : '-',
+          inputDate: dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '',
+          marketing: dataTable.getValue(i, 1) || '-',
           customer: customerName,
-          kota: c[7] ? c[7].v : '',
-          kabupaten: c[8] ? c[8].v : '',
-          requestDate: c[11] ? (c[11].f || c[11].v) : '',
+          kota: dataTable.getValue(i, 7) || '',
+          kabupaten: dataTable.getValue(i, 8) || '',
+          requestDate: dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '',
           surveyDateField: formattedDateField,
           statusSurvey: statusSurveyVal,
           aplikasiOut: '-'
@@ -292,44 +332,38 @@
         if (item.statusSurvey.toLowerCase() !== 'done') {
           globalActiveRequests.push(item);
         }
-      });
+      }
     }
 
-    function processGVizTracking(rows) {
+    function processGVizTracking(dataTable) {
       globalTrackingData = [];
+      const numRows = dataTable.getNumberOfRows();
 
-      rows.forEach(r => {
-        const c = r.c;
-        if (!c) return;
+      for (let i = 0; i < numRows; i++) {
+        const debiturName = dataTable.getValue(i, 1);
+        if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        const debiturName = c[1] ? c[1].v : '';
-        if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') return;
+        const tglKantor = dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '';
+        const tglProject = dataTable.getFormattedValue(i, 21) || dataTable.getValue(i, 21) || '';
+        const tglFix = tglProject || tglKantor || '';
+        const formattedSurveyDate = formatDate(tglFix);
 
-        // Tgl Survey Kantor & Project
-        const tglSurveyKantor = c[20] ? (c[20].f || c[20].v) : '';
-        const tglSurveyProject = c[21] ? (c[21].f || c[21].v) : '';
-
-        // Tgl Survey gabungan
-        let tglSurveyFix = tglSurveyProject || tglSurveyKantor || '';
-        let formattedSurveyDate = formatDate(tglSurveyFix);
-
-        // Keterangan Survey: Done jika terisi, Pending jika kosong
-        let statusSurveyTrack = formattedSurveyDate ? 'Done' : 'Pending';
+        const appOutVal = dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '-';
 
         const item = {
           debitur: debiturName,
-          marketing: c[7] ? c[7].v : '-',
-          kategoriSurvey: c[19] ? c[19].v : 'Wajib Survey', // Wajib / Non Survey
+          marketing: dataTable.getValue(i, 7) || '-',
+          kategoriSurvey: dataTable.getValue(i, 19) || 'Wajib Survey',
           tglSurvey: formattedSurveyDate,
-          statusSurvey: statusSurveyTrack,
-          kota: c[24] ? c[24].v : '',
-          provinsi: c[25] ? c[25].v : '',
-          aplikasiOut: c[26] ? (c[26].f || c[26].v) : '-', // Aplikasi Out
-          bulanOut: c[27] ? c[27].v : ''
+          statusSurvey: formattedSurveyDate ? 'Done' : 'Pending',
+          kota: dataTable.getValue(i, 24) || '',
+          provinsi: dataTable.getValue(i, 25) || '',
+          aplikasiOut: appOutVal,
+          bulanOut: dataTable.getValue(i, 27) || ''
         };
 
         globalTrackingData.push(item);
-      });
+      }
     }
 
     function populateLocationFilter() {
@@ -342,23 +376,32 @@
       });
     }
 
-    function populateAplikasiOutFilter() {
-      const filterAppSelect = document.getElementById('filterAplikasiOut');
-      const uniqueAppOut = [...new Set(globalTrackingData.map(i => i.aplikasiOut).filter(Boolean))];
+    function populateAplikasiOutFilters() {
+      const filterTahunSelect = document.getElementById('filterTahunOut');
+      const years = new Set();
 
-      filterAppSelect.innerHTML = '<option value="">Semua Bulan / Aplikasi Out</option>';
-      uniqueAppOut.forEach(out => {
-        if (out !== '-') {
-          filterAppSelect.innerHTML += `<option value="${out}">${out}</option>`;
+      globalTrackingData.forEach(item => {
+        if (item.aplikasiOut && item.aplikasiOut !== '-') {
+          const match = item.aplikasiOut.match(/\d{2,4}/);
+          if (match) {
+            let yr = match[0];
+            if (yr.length === 2) yr = '20' + yr;
+            years.add(yr);
+          }
         }
+      });
+
+      filterTahunSelect.innerHTML = '<option value="">Semua Tahun</option>';
+      Array.from(years).sort().forEach(yr => {
+        filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
       });
     }
 
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
-      const selectedAppOut = document.getElementById('filterAplikasiOut').value;
+      const selectedTahun = document.getElementById('filterTahunOut').value;
+      const selectedBulan = document.getElementById('filterBulanOut').value;
 
-      // Filter Data Active & History
       let filteredActive = globalActiveRequests;
       let filteredHistory = globalAllHistoryRequests;
       let filteredTracking = globalTrackingData;
@@ -369,36 +412,40 @@
         filteredTracking = filteredTracking.filter(i => i.kota === selectedLocation || i.provinsi === selectedLocation);
       }
 
-      if (selectedAppOut) {
-        filteredTracking = filteredTracking.filter(i => i.aplikasiOut === selectedAppOut);
+      if (selectedTahun) {
+        filteredTracking = filteredTracking.filter(i => i.aplikasiOut.includes(selectedTahun) || i.aplikasiOut.includes(selectedTahun.slice(-2)));
       }
 
-      // Calculate Summary Statistics dari Tracking Data
-      let wajibCount = 0;
-      let nonCount = 0;
-      let doneCount = 0;
-      let pendingCount = 0;
+      if (selectedBulan) {
+        filteredTracking = filteredTracking.filter(i => i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase()) || i.bulanOut.toLowerCase().includes(selectedBulan.toLowerCase()));
+      }
+
+      // Hitung Statistik Ringkasan
+      let wajibTotal = 0;
+      let wajibDone = 0;
+      let wajibPending = 0;
+      let nonSurveyTotal = 0;
 
       filteredTracking.forEach(t => {
         if (t.kategoriSurvey.toLowerCase().includes('non')) {
-          nonCount++;
+          nonSurveyTotal++;
         } else {
-          wajibCount++;
-        }
-
-        if (t.statusSurvey.toLowerCase() === 'done') {
-          doneCount++;
-        } else {
-          pendingCount++;
+          wajibTotal++;
+          if (t.statusSurvey.toLowerCase() === 'done') {
+            wajibDone++;
+          } else {
+            wajibPending++;
+          }
         }
       });
 
-      document.getElementById('statWajibSurvey').innerText = wajibCount;
-      document.getElementById('statNonSurvey').innerText = nonCount;
-      document.getElementById('statSurveyDone').innerText = doneCount;
-      document.getElementById('statSurveyPending').innerText = pendingCount;
+      document.getElementById('statWajibTotal').innerText = wajibTotal;
+      document.getElementById('statWajibDone').innerText = wajibDone;
+      document.getElementById('statWajibPending').innerText = wajibPending;
+      document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
+      document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue
+      // 1. Top 10 Active Queue Table
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -417,18 +464,16 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi
+      // 2. Top 10 Lokasi List
       const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
-        if (!locationMap[locKey]) {
-          locationMap[locKey] = [];
-        }
+        if (!locationMap[locKey]) locationMap[locKey] = [];
         locationMap[locKey].push(item);
       });
 
       const sortedLocations = Object.keys(locationMap)
-        .map(key => ({ location: key, count: locationMap[key].length, items: locationMap[key] }))
+        .map(key => ({ location: key, count: locationMap[key].length }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
@@ -446,11 +491,9 @@
         `).join('');
       }
 
-      // 3. History Requests & Tracking Data
+      // 3. History Table
       const historyBody = document.getElementById('historyTableBody');
-      
-      // Jika memfilter Aplikasi Out, tampilkan data Tracking
-      if (selectedAppOut && filteredTracking.length > 0) {
+      if ((selectedTahun || selectedBulan) && filteredTracking.length > 0) {
         historyBody.innerHTML = filteredTracking.map(item => `
           <tr class="hover:bg-slate-700/50 text-slate-300 transition">
             <td class="p-3 font-semibold text-slate-400">${item.bulanOut || '-'}</td>
@@ -519,7 +562,6 @@
     }
 
     setInterval(loadAndProcessData, 10000);
-    loadAndProcessData();
   </script>
 </body>
 </html>
