@@ -35,19 +35,19 @@
       </select>
     </div>
 
-    <!-- Filter Aplikasi Out (Tahun & Bulan Breakdown) -->
+    <!-- Filter Aplikasi Out (Tombol Tahun & Bulan Breakdown) -->
     <div class="flex items-center gap-2">
       <i class="fa-solid fa-calendar-days text-emerald-400"></i>
       <span class="font-semibold text-sm">Aplikasi Out:</span>
       
       <!-- Dropdown Pilihan Tahun Breakdown -->
       <select id="filterTahunOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
-        <option value="">Semua Tahun</option>
+        <option value="">Tahun</option>
       </select>
 
       <!-- Dropdown Pilihan Bulan Breakdown -->
       <select id="filterBulanOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white">
-        <option value="">Semua Bulan</option>
+        <option value="">Bulan</option>
       </select>
     </div>
   </section>
@@ -226,14 +226,6 @@
     let globalAllHistoryRequests = [];
     let globalTrackingData = [];
 
-    // Pemetaan Bulan
-    const monthNamesIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    const monthShortMap = {
-      "jan": "Januari", "feb": "Februari", "mar": "Maret", "apr": "April",
-      "mei": "Mei", "jun": "Juni", "jul": "Juli", "agu": "Agustus", "aug": "Agustus",
-      "sep": "September", "okt": "Oktober", "oct": "Oktober", "nov": "November", "des": "Desember", "dec": "Desember"
-    };
-
     google.charts.load('current', {'packages':['corechart']});
     google.charts.setOnLoadCallback(loadAndProcessData);
 
@@ -333,66 +325,84 @@
     function processGVizTracking(dataTable) {
       globalTrackingData = [];
       const numRows = dataTable.getNumberOfRows();
+      const numCols = dataTable.getNumberOfColumns();
 
       for (let i = 0; i < numRows; i++) {
         // Col 1 = Nama Debitur
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // Ambil Kategori Survey dari Col 18 atau Col 19
-        let catVal = dataTable.getValue(i, 18) || dataTable.getValue(i, 19) || 'Wajib Survey';
-        catVal = catVal.toString().trim();
-
-        // Flasifikasikan "Non Survey" fleksibel
+        // Pengecekan Kategori Survey menyeluruh dari beberapa sel kolom (Col 18 s/d 23)
         let isNonSurvey = false;
-        const catLower = catVal.toLowerCase().replace(/[^a-z]/g, '');
-        if (catLower.includes('nonsurvey') || catLower.includes('nonsurvei') || catLower === 'non') {
-          isNonSurvey = true;
+        let catVal = '';
+
+        for (let colIdx of [22, 20, 19, 18, 23]) {
+          if (colIdx < numCols) {
+            const val = dataTable.getValue(i, colIdx);
+            if (val) {
+              const str = val.toString().trim();
+              if (str.toLowerCase().includes('non') || str.toLowerCase().includes('tanpa')) {
+                isNonSurvey = true;
+                catVal = str;
+                break;
+              } else if (str.toLowerCase().includes('survey') || str.toLowerCase().includes('survei')) {
+                catVal = str;
+              }
+            }
+          }
         }
 
+        if (!catVal) catVal = isNonSurvey ? 'Non Survey' : 'Wajib Survey';
+
         // Tanggal Survey Kantor (Col 20) / Project (Col 21)
-        const tglKantor = dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '';
-        const tglProject = dataTable.getFormattedValue(i, 21) || dataTable.getValue(i, 21) || '';
+        const tglKantor = (20 < numCols) ? (dataTable.getFormattedValue(i, 20) || dataTable.getValue(i, 20) || '') : '';
+        const tglProject = (21 < numCols) ? (dataTable.getFormattedValue(i, 21) || dataTable.getValue(i, 21) || '') : '';
         const tglFix = tglProject || tglKantor || '';
         const formattedSurveyDate = formatDate(tglFix);
 
         // Aplikasi Out (Col 26) & Bulan Out (Col 27)
-        const appOutVal = dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '-';
-        const bulanOutVal = dataTable.getFormattedValue(i, 27) || dataTable.getValue(i, 27) || '';
+        const appOutVal = (26 < numCols) ? (dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '-') : '-';
+        const bulanOutVal = (27 < numCols) ? (dataTable.getFormattedValue(i, 27) || dataTable.getValue(i, 27) || '') : '';
 
         // Parsing Tahun dan Bulan dari string Aplikasi Out
-        let parsedYear = '';
-        let parsedMonth = '';
+        let strFull = (appOutVal.toString() + " " + bulanOutVal.toString()).trim();
+        let yr = '';
+        let mo = '';
 
-        const strOut = (appOutVal + ' ' + bulanOutVal).trim();
-        
-        // Ekstrak 4 digit tahun (2024, 2025, 2026) atau 2 digit tahun ('24 -> 2024)
-        const yMatch = strOut.match(/20\d{2}/) || strOut.match(/-(2[3-9])/);
+        // Parsing Tahun
+        const yMatch = strFull.match(/202[3-9]/) || strFull.match(/-(2[3-9])/);
         if (yMatch) {
-          parsedYear = yMatch[0].startsWith('-') ? '20' + yMatch[1] : yMatch[0];
+          yr = yMatch[0].startsWith('-') ? '20' + yMatch[1] : yMatch[0];
         }
 
-        // Ekstrak Bulan
-        for (const [key, fullMonth] of Object.entries(monthShortMap)) {
-          if (strOut.toLowerCase().includes(key)) {
-            parsedMonth = fullMonth;
+        // Parsing Bulan
+        const monthMap = {
+          "jan": "Januari", "feb": "Februari", "mar": "Maret", "apr": "April",
+          "mei": "Mei", "may": "Mei", "jun": "Juni", "jul": "Juli", 
+          "agu": "Agustus", "aug": "Agustus", "sep": "September", 
+          "okt": "Oktober", "oct": "Oktober", "nov": "November", "des": "Desember", "dec": "Desember"
+        };
+
+        for (const [key, name] of Object.entries(monthMap)) {
+          if (strFull.toLowerCase().includes(key)) {
+            mo = name;
             break;
           }
         }
 
         const item = {
           debitur: debiturName,
-          marketing: dataTable.getValue(i, 7) || '-',
+          marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
           tglSurvey: formattedSurveyDate,
           statusSurvey: formattedSurveyDate ? 'Done' : 'Pending',
-          kota: dataTable.getValue(i, 24) || '',
-          provinsi: dataTable.getValue(i, 25) || '',
+          kota: (24 < numCols) ? (dataTable.getValue(i, 24) || '') : '',
+          provinsi: (25 < numCols) ? (dataTable.getValue(i, 25) || '') : '',
           aplikasiOut: appOutVal.toString().trim(),
           bulanOut: bulanOutVal.toString().trim(),
-          parsedYear: parsedYear,
-          parsedMonth: parsedMonth
+          parsedYear: yr,
+          parsedMonth: mo
         };
 
         globalTrackingData.push(item);
@@ -421,16 +431,17 @@
         if (item.parsedMonth) months.add(item.parsedMonth);
       });
 
-      // Render Dropdown Tahun Breakdown
-      filterTahunSelect.innerHTML = '<option value="">Semua Tahun</option>';
+      // Render Dropdown Tahun Breakdown (Teks Utama "Tahun")
+      filterTahunSelect.innerHTML = '<option value="">Tahun</option>';
       Array.from(years).sort().reverse().forEach(yr => {
         filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
       });
 
-      // Render Dropdown Bulan Breakdown
-      filterBulanSelect.innerHTML = '<option value="">Semua Bulan</option>';
-      monthNamesIndo.forEach(m => {
-        if (months.has(m) || Array.from(months).length === 0) {
+      // Render Dropdown Bulan Breakdown (Teks Utama "Bulan")
+      filterBulanSelect.innerHTML = '<option value="">Bulan</option>';
+      const monthOrder = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      monthOrder.forEach(m => {
+        if (months.has(m) || months.size === 0) {
           filterBulanSelect.innerHTML += `<option value="${m}">${m}</option>`;
         }
       });
