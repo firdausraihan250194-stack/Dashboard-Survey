@@ -10,10 +10,10 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen p-6">
 
   <!-- Header Section -->
-  <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-4">
+  <header class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-slate-700 pb-4">
     <div>
       <h1 class="text-2xl md:text-3xl font-bold text-blue-400">Dashboard Request Survey</h1>
-      <p class="text-sm text-slate-400">Monitoring Antrean Prioritas & History Survey Real-Time</p>
+      <p class="text-sm text-slate-400">Monitoring Antrean Prioritas, Tracking Aplikasi & History Survey Real-Time</p>
     </div>
     <div class="flex items-center gap-4 mt-4 md:mt-0">
       <span id="lastUpdate" class="text-xs text-slate-400">Memuat data...</span>
@@ -24,15 +24,68 @@
   </header>
 
   <!-- Filter Section -->
-  <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-8 flex flex-wrap gap-4 items-center">
+  <section class="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6 flex flex-wrap gap-6 items-center">
+    <!-- Filter Lokasi -->
     <div class="flex items-center gap-2">
-      <i class="fa-solid fa-filter text-blue-400"></i>
-      <span class="font-semibold text-sm">Filter Lokasi (Kota/Provinsi):</span>
+      <i class="fa-solid fa-map-location-dot text-blue-400"></i>
+      <span class="font-semibold text-sm">Lokasi (Kota):</span>
+      <select id="filterLokasi" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white ml-1">
+        <option value="">Semua Lokasi / Kota</option>
+      </select>
     </div>
-    <select id="filterLokasi" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-2 rounded-lg border border-slate-600 focus:outline-none text-white">
-      <option value="">Semua Lokasi / Kota</option>
-    </select>
+
+    <!-- Filter Aplikasi Out -->
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+      <span class="font-semibold text-sm">Aplikasi Out:</span>
+      <select id="filterAplikasiOut" onchange="renderDashboard()" class="bg-slate-700 text-sm px-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none text-white ml-1">
+        <option value="">Semua Bulan / Aplikasi Out</option>
+      </select>
+    </div>
   </section>
+
+  <!-- Summary Cards Section (Tracking Aplikasi) -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Debitur Wajib Survey</p>
+        <h3 id="statWajibSurvey" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+      </div>
+      <div class="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 text-amber-400">
+        <i class="fa-solid fa-clipboard-list text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Debitur Non Survey</p>
+        <h3 id="statNonSurvey" class="text-2xl font-bold text-slate-300 mt-1">0</h3>
+      </div>
+      <div class="w-10 h-10 bg-slate-500/10 rounded-lg flex items-center justify-center border border-slate-500/20 text-slate-400">
+        <i class="fa-solid fa-user-xmark text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Survey Completed (Done)</p>
+        <h3 id="statSurveyDone" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+      </div>
+      <div class="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+        <i class="fa-solid fa-circle-check text-lg"></i>
+      </div>
+    </div>
+
+    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-400 font-medium">Survey Pending</p>
+        <h3 id="statSurveyPending" class="text-2xl font-bold text-red-400 mt-1">0</h3>
+      </div>
+      <div class="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center border border-red-500/20 text-red-400">
+        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Grid Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -80,7 +133,7 @@
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold text-blue-400">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey & Tracking Debitur
       </h2>
       <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">All Records</span>
     </div>
@@ -88,12 +141,13 @@
       <table class="w-full text-left text-xs">
         <thead class="bg-slate-700 text-slate-300 uppercase">
           <tr>
-            <th class="p-3">Input Date</th>
+            <th class="p-3">Input Date / Bulan</th>
             <th class="p-3">Nama Marketing</th>
-            <th class="p-3">Nama Customer</th>
+            <th class="p-3">Nama Debitur / Customer</th>
             <th class="p-3">Lokasi Project</th>
-            <th class="p-3">Request Tanggal</th>
-            <th class="p-3">Tanggal Survey Field</th>
+            <th class="p-3">Aplikasi Out</th>
+            <th class="p-3">Kategori Survey</th>
+            <th class="p-3">Tanggal Survey</th>
             <th class="p-3">Status Survey</th>
           </tr>
         </thead>
@@ -140,6 +194,7 @@
 
     let globalActiveRequests = [];
     let globalAllHistoryRequests = [];
+    let globalTrackingData = [];
 
     function formatDate(val) {
       if (!val) return '';
@@ -167,42 +222,39 @@
       }
     }
 
+    // JSONP loader dua tab sekaligus
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
-      
-      const oldScript = document.getElementById('jsonpScript');
-      if (oldScript) oldScript.remove();
 
-      const script = document.createElement('script');
-      script.id = 'jsonpScript';
-      script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:handleGoogleVizResponse`;
-      
-      script.onerror = function() {
-        document.getElementById('lastUpdate').innerText = "Gagal! Pastikan file Sheet di-share Publik.";
-      };
+      // Tab 1: Data Request
+      const s1 = document.createElement('script');
+      s1.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&tqx=responseHandler:handleDataRequestResponse`;
+      document.body.appendChild(s1);
 
-      document.body.appendChild(script);
+      // Tab 2: Tracking Aplikasi
+      const s2 = document.createElement('script');
+      s2.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&tqx=responseHandler:handleTrackingResponse`;
+      document.body.appendChild(s2);
     }
 
-    function handleGoogleVizResponse(response) {
-      try {
-        if (!response || !response.table || !response.table.rows) {
-          document.getElementById('lastUpdate').innerText = "Data tidak ditemukan!";
-          return;
-        }
-
-        processGVizData(response.table.rows);
+    function handleDataRequestResponse(response) {
+      if (response && response.table && response.table.rows) {
+        processGVizDataRequest(response.table.rows);
         populateLocationFilter();
         renderDashboard();
-
-        document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
-      } catch (err) {
-        console.error("Error processing data:", err);
-        document.getElementById('lastUpdate').innerText = "Gagal memproses data!";
       }
     }
 
-    function processGVizData(rows) {
+    function handleTrackingResponse(response) {
+      if (response && response.table && response.table.rows) {
+        processGVizTracking(response.table.rows);
+        populateAplikasiOutFilter();
+        renderDashboard();
+      }
+      document.getElementById('lastUpdate').innerText = "Last update: " + new Date().toLocaleTimeString('id-ID');
+    }
+
+    function processGVizDataRequest(rows) {
       globalActiveRequests = [];
       globalAllHistoryRequests = [];
 
@@ -225,13 +277,14 @@
 
         const item = {
           inputDate: c[0] ? (c[0].f || c[0].v) : '',
-          marketing: c[1] ? c[1].v : '-',                 // Col B: Nama Marketing
-          customer: customerName,                          // Col C: Nama Customer
-          kota: c[7] ? c[7].v : '',                        // Col H: Kota
-          kabupaten: c[8] ? c[8].v : '',                   // Col I: Kabupaten
-          requestDate: c[11] ? (c[11].f || c[11].v) : '',  // Col L: Request Tanggal
-          surveyDateField: formattedDateField,             // Col M: Tanggal Survey Field
-          statusSurvey: statusSurveyVal
+          marketing: c[1] ? c[1].v : '-',
+          customer: customerName,
+          kota: c[7] ? c[7].v : '',
+          kabupaten: c[8] ? c[8].v : '',
+          requestDate: c[11] ? (c[11].f || c[11].v) : '',
+          surveyDateField: formattedDateField,
+          statusSurvey: statusSurveyVal,
+          aplikasiOut: '-'
         };
 
         globalAllHistoryRequests.push(item);
@@ -239,6 +292,43 @@
         if (item.statusSurvey.toLowerCase() !== 'done') {
           globalActiveRequests.push(item);
         }
+      });
+    }
+
+    function processGVizTracking(rows) {
+      globalTrackingData = [];
+
+      rows.forEach(r => {
+        const c = r.c;
+        if (!c) return;
+
+        const debiturName = c[1] ? c[1].v : '';
+        if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') return;
+
+        // Tgl Survey Kantor & Project
+        const tglSurveyKantor = c[20] ? (c[20].f || c[20].v) : '';
+        const tglSurveyProject = c[21] ? (c[21].f || c[21].v) : '';
+
+        // Tgl Survey gabungan
+        let tglSurveyFix = tglSurveyProject || tglSurveyKantor || '';
+        let formattedSurveyDate = formatDate(tglSurveyFix);
+
+        // Keterangan Survey: Done jika terisi, Pending jika kosong
+        let statusSurveyTrack = formattedSurveyDate ? 'Done' : 'Pending';
+
+        const item = {
+          debitur: debiturName,
+          marketing: c[7] ? c[7].v : '-',
+          kategoriSurvey: c[19] ? c[19].v : 'Wajib Survey', // Wajib / Non Survey
+          tglSurvey: formattedSurveyDate,
+          statusSurvey: statusSurveyTrack,
+          kota: c[24] ? c[24].v : '',
+          provinsi: c[25] ? c[25].v : '',
+          aplikasiOut: c[26] ? (c[26].f || c[26].v) : '-', // Aplikasi Out
+          bulanOut: c[27] ? c[27].v : ''
+        };
+
+        globalTrackingData.push(item);
       });
     }
 
@@ -252,16 +342,61 @@
       });
     }
 
+    function populateAplikasiOutFilter() {
+      const filterAppSelect = document.getElementById('filterAplikasiOut');
+      const uniqueAppOut = [...new Set(globalTrackingData.map(i => i.aplikasiOut).filter(Boolean))];
+
+      filterAppSelect.innerHTML = '<option value="">Semua Bulan / Aplikasi Out</option>';
+      uniqueAppOut.forEach(out => {
+        if (out !== '-') {
+          filterAppSelect.innerHTML += `<option value="${out}">${out}</option>`;
+        }
+      });
+    }
+
     function renderDashboard() {
       const selectedLocation = document.getElementById('filterLokasi').value;
+      const selectedAppOut = document.getElementById('filterAplikasiOut').value;
 
+      // Filter Data Active & History
       let filteredActive = globalActiveRequests;
       let filteredHistory = globalAllHistoryRequests;
+      let filteredTracking = globalTrackingData;
 
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
         filteredHistory = filteredHistory.filter(i => i.kota === selectedLocation);
+        filteredTracking = filteredTracking.filter(i => i.kota === selectedLocation || i.provinsi === selectedLocation);
       }
+
+      if (selectedAppOut) {
+        filteredTracking = filteredTracking.filter(i => i.aplikasiOut === selectedAppOut);
+      }
+
+      // Calculate Summary Statistics dari Tracking Data
+      let wajibCount = 0;
+      let nonCount = 0;
+      let doneCount = 0;
+      let pendingCount = 0;
+
+      filteredTracking.forEach(t => {
+        if (t.kategoriSurvey.toLowerCase().includes('non')) {
+          nonCount++;
+        } else {
+          wajibCount++;
+        }
+
+        if (t.statusSurvey.toLowerCase() === 'done') {
+          doneCount++;
+        } else {
+          pendingCount++;
+        }
+      });
+
+      document.getElementById('statWajibSurvey').innerText = wajibCount;
+      document.getElementById('statNonSurvey').innerText = nonCount;
+      document.getElementById('statSurveyDone').innerText = doneCount;
+      document.getElementById('statSurveyPending').innerText = pendingCount;
 
       // 1. Top 10 Active Queue
       const top10Active = filteredActive.slice(0, 10);
@@ -282,7 +417,7 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi dengan Tombol Klik Breakdown Customer
+      // 2. Top 10 Lokasi
       const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
@@ -301,7 +436,7 @@
       if (sortedLocations.length === 0) {
         locList.innerHTML = `<li class="text-slate-500 text-xs">Belum ada data lokasi.</li>`;
       } else {
-        locList.innerHTML = sortedLocations.map((loc, idx) => `
+        locList.innerHTML = sortedLocations.map(loc => `
           <li class="flex justify-between items-center bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition">
             <span class="text-slate-300 font-medium">${loc.location}</span>
             <button onclick="showLocationBreakdown('${encodeURIComponent(loc.location)}')" class="font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded text-xs transition flex items-center gap-1 cursor-pointer">
@@ -311,11 +446,24 @@
         `).join('');
       }
 
-      // 3. History Requests (Ditambahkan Kolom Nama Marketing)
+      // 3. History Requests & Tracking Data
       const historyBody = document.getElementById('historyTableBody');
-      if (filteredHistory.length === 0) {
-        historyBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
-      } else {
+      
+      // Jika memfilter Aplikasi Out, tampilkan data Tracking
+      if (selectedAppOut && filteredTracking.length > 0) {
+        historyBody.innerHTML = filteredTracking.map(item => `
+          <tr class="hover:bg-slate-700/50 text-slate-300 transition">
+            <td class="p-3 font-semibold text-slate-400">${item.bulanOut || '-'}</td>
+            <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
+            <td class="p-3 font-medium text-white">${item.debitur}</td>
+            <td class="p-3">${item.provinsi || item.kota || '-'}</td>
+            <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
+            <td class="p-3">${item.kategoriSurvey}</td>
+            <td class="p-3">${item.tglSurvey ? `<span class="text-slate-200 font-medium">${item.tglSurvey}</span>` : `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px]">Pending</span>`}</td>
+            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
+          </tr>
+        `).join('');
+      } else if (filteredHistory.length > 0) {
         historyBody.innerHTML = filteredHistory.map(item => {
           let surveyFieldDisplay = item.surveyDateField && item.surveyDateField !== '-' && item.surveyDateField.toLowerCase() !== 'pending'
             ? `<span class="text-slate-200 font-medium">${item.surveyDateField}</span>`
@@ -327,27 +475,28 @@
               <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
               <td class="p-3 font-medium text-white">${item.customer}</td>
               <td class="p-3">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
-              <td class="p-3">${formatDate(item.requestDate)}</td>
+              <td class="p-3 text-slate-400">${item.aplikasiOut}</td>
+              <td class="p-3">Wajib Survey</td>
               <td class="p-3">${surveyFieldDisplay}</td>
               <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
             </tr>
           `;
         }).join('');
+      } else {
+        historyBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
       }
     }
 
-    // Fungsi menampilkan Popup Modal Breakdown Customer per Lokasi
     function showLocationBreakdown(encodedLocationKey) {
       const locationKey = decodeURIComponent(encodedLocationKey);
-      
       const filteredItems = globalActiveRequests.filter(item => {
         const key = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
         return key === locationKey;
       });
 
       document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-map-pin mr-2"></i>Detail Customer: ${locationKey}`;
-      
       const modalBody = document.getElementById('modalTableBody');
+      
       if (filteredItems.length === 0) {
         modalBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data.</td></tr>`;
       } else {
