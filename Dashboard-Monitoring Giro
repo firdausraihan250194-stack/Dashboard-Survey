@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Monitoring Tolakan Giro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+    <!-- Sidebar / Navigation -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            
+            <!-- Header -->
+            <header class="bg-slate-800 border-b border-slate-700 px-8 py-5 flex justify-between items-center sticky top-0 z-10 shadow-lg">
+                <div>
+                    <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="layout-dashboard" class="text-indigo-400"></i>
+                        Dashboard Monitoring Tolakan Giro
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-1">Analisis Frekuensi & Alasan Tolakan Giro Debitur</p>
+                </div>
+                
+                <!-- Filter Controls -->
+                <div class="flex items-center gap-4 bg-slate-900/60 p-2 rounded-xl border border-slate-700/60">
+                    <div class="flex items-center gap-2 px-2">
+                        <i data-lucide="filter" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-xs font-semibold text-slate-300">Filter:</span>
+                    </div>
+                    
+                    <!-- Filter Tahun -->
+                    <select id="filterTahun" class="bg-slate-800 text-slate-200 text-sm border border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Semua Tahun</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+
+                    <!-- Filter Bulan -->
+                    <select id="filterBulan" class="bg-slate-800 text-slate-200 text-sm border border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Semua Bulan</option>
+                        <option value="0">Januari</option>
+                        <option value="1">Februari</option>
+                        <option value="2">Maret</option>
+                        <option value="3">April</option>
+                        <option value="4">Mei</option>
+                        <option value="5">Juni</option>
+                        <option value="6">Juli</option>
+                        <option value="7">Agustus</option>
+                        <option value="8">September</option>
+                        <option value="9">Oktober</option>
+                        <option value="10">November</option>
+                        <option value="11">Desember</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="p-8 space-y-8">
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Card 1: Total Customer -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Total Customer (Unik)</p>
+                                <h3 id="statTotalCustomer" class="text-3xl font-bold text-white mt-2">0</h3>
+                            </div>
+                            <div class="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                <i data-lucide="users"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Total Transaksi Tolakan -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Total Kejadian Tolakan</p>
+                                <h3 id="statTotalTolakan" class="text-3xl font-bold text-rose-400 mt-2">0</h3>
+                            </div>
+                            <div class="p-3 bg-rose-500/10 rounded-xl text-rose-400">
+                                <i data-lucide="alert-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: High Risk Customers (>3x/Bulan) -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 relative overflow-hidden backdrop-blur-xl">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-medium text-slate-400">Customer Risk Tinggi (>3x/Bln)</p>
+                                <h3 id="statHighRisk" class="text-3xl font-bold text-amber-400 mt-2">0</h3>
+                            </div>
+                            <div class="p-3 bg-amber-500/10 rounded-xl text-amber-400">
+                                <i data-lucide="shield-alert"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Top 10 Bank Chart -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 backdrop-blur-xl">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="landmark" class="text-indigo-400"></i>
+                            Top 10 Bank Tolakan Giro Terbanyak
+                        </h3>
+                        <div class="relative h-72">
+                            <canvas id="bankChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Alasan Tolakan Chart -->
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 backdrop-blur-xl">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="text-indigo-400"></i>
+                            Distribusi Alasan Tolakan
+                        </h3>
+                        <div class="relative h-72">
+                            <canvas id="reasonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table: Top 10 High Frequency Customers -->
+                <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 backdrop-blur-xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="text-amber-400"></i>
+                                Top 10 Customer dengan Tolakan >3x / Bulan
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Termasuk breakdown 3 tanggal PDC & tolakan terupdate serta alasannya</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="bg-slate-900/60 text-slate-400 uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4 rounded-l-lg">Nama Customer / Rekening</th>
+                                    <th class="py-3 px-4 text-center">Frek. Tolakan</th>
+                                    <th class="py-3 px-4">3 Tanggal PDC & Tolakan Terupdate</th>
+                                    <th class="py-3 px-4 rounded-r-lg">Alasan Utama Tolakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableCustomerBody" class="divide-y divide-slate-700/50">
+                                <!-- Dynamic Data Inserted Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Script Application -->
+    <script>
+        lucide.createIcons();
+
+        // Target URL Google Sheet (Format CSV Published)
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1blmL1pawujNDj_QVtnk7d7hq-U8LrAeEAfngdIzAyXE/export?format=csv&gid=0';
+
+        let rawData = [];
+        let bankChartInstance = null;
+        let reasonChartInstance = null;
+
+        // Fetch Data dari Google Sheets
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvText = await response.text();
+                rawData = parseCSV(csvText);
+                initDashboard();
+            } catch (err) {
+                console.error("Gagal memuat data Google Sheets:", err);
+            }
+        }
+
+        // CSV Parser Sederhana
+        function parseCSV(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"\vert{}"$/g, ''));
+                let obj = {};
+                headers.forEach((h, i) => {
+                    obj[h] = values[i] || '';
+                });
+                return obj;
+            });
+        }
+
+        function initDashboard() {
+            // Event Listener Filter
+            document.getElementById('filterTahun').addEventListener('change', updateDashboard);
+            document.getElementById('filterBulan').addEventListener('change', updateDashboard);
+
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const tahun = document.getElementById('filterTahun').value;
+            const bulan = document.getElementById('filterBulan').value;
+
+            // Filter Data
+            const filteredData = rawData.filter(item => {
+                const tglPDC = new Date(item['Tgl PDC']);
+                if (isNaN(tglPDC)) return false;
+
+                const matchTahun = (tahun === 'ALL') || (tglPDC.getFullYear().toString() === tahun);
+                const matchBulan = (bulan === 'ALL') || (tglPDC.getMonth().toString() === bulan);
+
+                return matchTahun && matchBulan;
+            });
+
+            renderKPI(filteredData);
+            renderBankChart(filteredData);
+            renderReasonChart(filteredData);
+            renderTable(filteredData);
+        }
+
+        // Render KPI Cards
+        function renderKPI(data) {
+            const uniqueCustomers = new Set(data.map(d => d['Atas Nama Rekening'])).size;
+            document.getElementById('statTotalCustomer').innerText = uniqueCustomers;
+            document.getElementById('statTotalTolakan').innerText = data.length;
+
+            // Hitung Customer Risk Tinggi (>3x/Bln)
+            const customerFreq = {};
+            data.forEach(d => {
+                const name = d['Atas Nama Rekening'];
+                const date = new Date(d['Tgl PDC']);
+                const key = `${name}_${date.getFullYear()}_${date.getMonth()}`;
+                customerFreq[key] = (customerFreq[key] || 0) + 1;
+            });
+
+            const highRiskCount = Object.values(customerFreq).filter(count => count > 3).length;
+            document.getElementById('statHighRisk').innerText = highRiskCount;
+        }
+
+        // Render Chart Bank
+        function renderBankChart(data) {
+            const bankCounts = {};
+            data.forEach(d => {
+                const bank = d['Nama Bank'] || 'Lainnya';
+                bankCounts[bank] = (bankCounts[bank] || 0) + 1;
+            });
+
+            const sortedBanks = Object.entries(bankCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+
+            const labels = sortedBanks.map(b => b[0]);
+            const counts = sortedBanks.map(b => b[1]);
+
+            if (bankChartInstance) bankChartInstance.destroy();
+
+            const ctx = document.getElementById('bankChart').getContext('2d');
+            bankChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frekuensi Tolakan',
+                        data: counts,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+
+        // Render Chart Alasan
+        function renderReasonChart(data) {
+            const reasonCounts = {};
+            data.forEach(d => {
+                const reason = d['Keterangan'] || 'Lain-Lain';
+                reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+            });
+
+            const sortedReasons = Object.entries(reasonCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+            if (reasonChartInstance) reasonChartInstance.destroy();
+
+            const ctx = document.getElementById('reasonChart').getContext('2d');
+            reasonChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedReasons.map(r => r[0]),
+                    datasets: [{
+                        data: sortedReasons.map(r => r[1]),
+                        backgroundColor: ['#f43f5e', '#fbbf24', '#3b82f6', '#10b981', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#94a3b8' } } }
+                }
+            });
+        }
+
+        // Render Table High Risk Customer
+        function renderTable(data) {
+            const customerMap = {};
+
+            data.forEach(d => {
+                const name = d['Atas Nama Rekening'];
+                if (!name) return;
+
+                if (!customerMap[name]) {
+                    customerMap[name] = { name: name, count: 0, items: [] };
+                }
+
+                customerMap[name].count += 1;
+                customerMap[name].items.push(d);
+            });
+
+            // Filter Customer dengan Tolakan >3x
+            let highRiskList = Object.values(customerMap).filter(c => c.count > 3);
+            highRiskList.sort((a, b) => b.count - a.count);
+            highRiskList = highRiskList.slice(0, 10);
+
+            const tbody = document.getElementById('tableCustomerBody');
+            tbody.innerHTML = '';
+
+            if (highRiskList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">Tidak ada customer dengan tolakan >3x pada periode ini.</td></tr>`;
+                return;
+            }
+
+            highRiskList.forEach(c => {
+                // Ambil 3 transaksi terupdate
+                const sortedItems = c.items.sort((a, b) => new Date(b['Tgl PDC']) - new Date(a['Tgl PDC'])).slice(0, 3);
+                
+                const datesInfo = sortedItems.map(item => 
+                    `<div class="text-xs mb-1"><span class="text-slate-400">PDC:</span> ${item['Tgl PDC']} | <span class="text-rose-400">Tolakan:</span> ${item['Tgl Tolakan']}</div>`
+                ).join('');
+
+                const reason = sortedItems[0]['Keterangan'] || '-';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-semibold text-white">${c.name}</td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-full text-xs font-bold">${c.count}x</span>
+                    </td>
+                    <td class="py-4 px-4">${datesInfo}</td>
+                    <td class="py-4 px-4 text-slate-300">${reason}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Inisialisasi awal saat halaman dimuat
+        fetchSheetData();
+    </script>
+</body>
+</html>
