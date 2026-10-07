@@ -188,8 +188,8 @@
             <th class="p-3">Input Date / Bulan</th>
             <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Debitur / Customer</th>
-            <th class="p-3">Lokasi Project</th>
-            <th class="p-3">Aplikasi Out</th>
+            <th class="p-3">Lokasi Project (Col AB)</th>
+            <th class="p-3">Aplikasi Out (Col AE)</th>
             <th class="p-3">Kategori Survey</th>
             <th class="p-3">Tgl Survey Project (Col Z)</th>
             <th class="p-3">Status Survey</th>
@@ -383,7 +383,7 @@
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // VERIFIKASI DECISION FINAL (APPROVE ONLY) - Kolom AP (Index 41) / AO (Index 40) / AQ (Index 42)
+        // VERIFIKASI DECISION APPROVAL (APPROVE ONLY)
         let decisionFinalVal = '';
         for (let dCol of [41, 40, 42, 30]) {
           if (dCol < numCols) {
@@ -398,7 +398,6 @@
           }
         }
 
-        // HANYA AMBIL DATA DENGAN DECISION FINAL APPROVE / APPROVED
         if (!decisionFinalVal || !decisionFinalVal.toLowerCase().includes('approve')) {
           continue; // Lewati jika bukan Approve / Approved
         }
@@ -433,7 +432,20 @@
           computedStatus = 'Non Survey';
         }
 
-        // APLIKASI OUT DIKOREKSI: Kolom AE (Index 30) & Bulan Out AF (Index 31)
+        // 1. LOKASI PROJECT: Membaca Kolom AB (Index 27) dengan fallback Kolom AA/AC jika bergeser
+        let lokasiProjectVal = '';
+        for (let lCol of [27, 26, 28, 24, 25]) {
+          if (lCol < numCols) {
+            const val = dataTable.getValue(i, lCol);
+            if (val && val.toString().trim() !== '' && val.toString().trim() !== '-') {
+              lokasiProjectVal = val.toString().trim();
+              break;
+            }
+          }
+        }
+        if (!lokasiProjectVal) lokasiProjectVal = '-';
+
+        // 2. APLIKASI OUT: Membaca Kolom AE (Index 30)
         let appOutVal = '';
         if (30 < numCols) {
           appOutVal = dataTable.getFormattedValue(i, 30) || dataTable.getValue(i, 30) || '';
@@ -468,8 +480,9 @@
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
           tglSurveyProject: formattedSurveyDate || (computedStatus === 'Completed' ? tglProjectVal : '-'),
           statusSurvey: computedStatus,
-          kota: (24 < numCols) ? (dataTable.getValue(i, 24) || '') : '',
-          provinsi: (25 < numCols) ? (dataTable.getValue(i, 25) || '') : '',
+          lokasiProject: lokasiProjectVal,
+          kota: lokasiProjectVal,
+          provinsi: lokasiProjectVal,
           aplikasiOut: strOut,
           parsedYear: parsedYear === '2099' ? '' : parsedYear,
           sortScore: sortScore,
@@ -482,7 +495,7 @@
 
     function populateLocationFilter() {
       const filterSelect = document.getElementById('filterLokasi');
-      const uniqueLocations = [...new Set(globalAllHistoryRequests.map(i => i.kota).filter(Boolean))];
+      const uniqueLocations = [...new Set(globalTrackingData.map(i => i.lokasiProject).filter(l => l && l !== '-'))];
 
       filterSelect.innerHTML = '<option value="">Semua Lokasi / Kota</option>';
       uniqueLocations.forEach(loc => {
@@ -516,13 +529,11 @@
       const selectedBulan = document.getElementById('filterBulanOut').value;
 
       let filteredActive = globalActiveRequests;
-      let filteredHistory = globalAllHistoryRequests;
       currentFilteredTracking = globalTrackingData;
 
       if (selectedLocation) {
         filteredActive = filteredActive.filter(i => i.kota === selectedLocation);
-        filteredHistory = filteredHistory.filter(i => i.kota === selectedLocation);
-        currentFilteredTracking = currentFilteredTracking.filter(i => i.kota === selectedLocation || i.provinsi === selectedLocation);
+        currentFilteredTracking = currentFilteredTracking.filter(i => i.lokasiProject === selectedLocation);
       }
 
       if (selectedTahun) {
@@ -607,9 +618,8 @@
         `).join('');
       }
 
-      // 3. History Table (Menggunakan Data Tracking Aplikasi Agar Kolom Aplikasi Out Terisi Sempurna)
+      // 3. History Table (MURNI MENAMPILKAN DATA TRACKING APLIKASI)
       const historyBody = document.getElementById('historyTableBody');
-      
       const displayData = currentFilteredTracking.length > 0 ? currentFilteredTracking : globalTrackingData;
 
       if (displayData.length > 0) {
@@ -618,7 +628,7 @@
             <td class="p-3 font-semibold text-slate-400">${formatDate(item.inputDate) || '-'}</td>
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
             <td class="p-3 font-medium text-white">${item.debitur}</td>
-            <td class="p-3">${item.provinsi || item.kota || '-'}</td>
+            <td class="p-3 text-emerald-300 font-medium">${item.lokasiProject}</td>
             <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
             <td class="p-3">${item.kategoriSurvey}</td>
             <td class="p-3 text-slate-200 font-medium">${item.tglSurveyProject}</td>
@@ -644,7 +654,7 @@
             <td class="p-2.5 font-bold text-red-400">#${idx + 1}</td>
             <td class="p-2.5 font-semibold text-white">${item.debitur}</td>
             <td class="p-2.5 text-blue-300">${item.marketing}</td>
-            <td class="p-2.5">${item.provinsi || item.kota || '-'}</td>
+            <td class="p-2.5 text-emerald-300">${item.lokasiProject}</td>
             <td class="p-2.5 font-semibold text-emerald-400">${item.aplikasiOut}</td>
             <td class="p-2.5">${getStatusBadge('Pending')}</td>
           </tr>
