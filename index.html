@@ -188,10 +188,10 @@
             <th class="p-3">Input Date / Bulan</th>
             <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Debitur / Customer</th>
-            <th class="p-3">Lokasi Project (Col AB)</th>
-            <th class="p-3">Aplikasi Out (Col AE & AF)</th>
+            <th class="p-3">Lokasi Project</th>
+            <th class="p-3">Aplikasi Out</th>
             <th class="p-3">Kategori Survey</th>
-            <th class="p-3">Tgl Survey Project (Col Z)</th>
+            <th class="p-3">Tgl Survey Project</th>
             <th class="p-3">Status Survey</th>
           </tr>
         </thead>
@@ -445,15 +445,13 @@
         }
         if (!lokasiProjectVal) lokasiProjectVal = '-';
 
-        // TANGGAL APLIKASI OUT: Kolom AE (Index 30)
+        // TANGGAL APLIKASI OUT: Kolom AE (Index 30) & AF (Index 31)
         let rawAE = (30 < numCols) ? (dataTable.getFormattedValue(i, 30) || dataTable.getValue(i, 30) || '') : '';
-        // BULAN OUT & TAHUN: Kolom AF (Index 31) -> Contoh "Sep-26"
         let rawAF = (31 < numCols) ? (dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '') : '';
 
         let strOut = rawAE.toString().trim();
         let strBulanOut = rawAF.toString().trim();
 
-        // EKSTRAKSI TAHUN LENGKAP (Cek dari Kolom AF "Sep-26" / "Sep-2026")
         let parsedYear = '2099';
         const fullCombo = `${strOut} ${strBulanOut}`;
 
@@ -466,7 +464,6 @@
           parsedYear = '20' + yMatch2[1];
         }
 
-        // GABUNGKAN TANGGAL/BULAN DARI KOLOM AE DENGAN TAHUN DARI KOLOM AF
         let displayAplikasiOut = strOut;
         if (parsedYear !== '2099' && strOut && strOut !== '-') {
           if (!strOut.includes(parsedYear) && !strOut.includes(parsedYear.slice(-2))) {
@@ -630,7 +627,7 @@
         `).join('');
       }
 
-      // 3. History Table
+      // 3. History Table (MURNI HEADER RAPI TANPA PETUNJUK KOLOM)
       const historyBody = document.getElementById('historyTableBody');
       const displayData = currentFilteredTracking.length > 0 ? currentFilteredTracking : globalTrackingData;
 
