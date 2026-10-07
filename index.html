@@ -71,7 +71,7 @@
         <div>
           <div class="flex items-center gap-2">
             <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Debitur Tracking Survey</p>
-            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold px-2 py-0.5 rounded">Approve Only</span>
+            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold px-2 py-0.5 rounded">All Data</span>
           </div>
           <h3 id="statTotalDebitur" class="text-3xl font-extrabold text-blue-400 mt-1">0</h3>
         </div>
@@ -164,11 +164,11 @@
     </div>
   </div>
 
-  <!-- History Section -->
+  <!-- Tracking Debitur Section -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold text-blue-400">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i>History Request Survey & Tracking Debitur
+        <i class="fa-solid fa-clock-rotate-left mr-2"></i>Tracking Debitur
       </h2>
       <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">All Records</span>
     </div>
@@ -176,14 +176,16 @@
       <table class="w-full text-left text-xs">
         <thead class="bg-slate-700 text-slate-300 uppercase">
           <tr>
-            <th class="p-3">Input Date / Bulan</th>
+            <th class="p-3">No</th>
             <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Debitur / Customer</th>
             <th class="p-3">Lokasi Project</th>
             <th class="p-3">Aplikasi Out</th>
             <th class="p-3">Kategori Survey</th>
             <th class="p-3">Tgl Survey Project</th>
+            <th class="p-3">Time Process</th>
             <th class="p-3">Status Survey</th>
+            <th class="p-3">Decision Final</th>
           </tr>
         </thead>
         <tbody id="historyTableBody" class="divide-y divide-slate-700">
@@ -229,7 +231,7 @@
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
         <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
-          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama (Approve Only)
+          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama
         </h3>
         <button onclick="closeModal('pendingModal')" class="text-slate-400 hover:text-white text-xl">
           <i class="fa-solid fa-xmark"></i>
@@ -293,6 +295,17 @@
         return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
       } else {
         return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+      }
+    }
+
+    function getDecisionBadge(decision) {
+      const d = (decision || '-').toString().trim();
+      if (d.toLowerCase().includes('approve')) {
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${d}</span>`;
+      } else if (d.toLowerCase().includes('reject') || d.toLowerCase().includes('cancel')) {
+        return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${d}</span>`;
+      } else {
+        return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${d}</span>`;
       }
     }
 
@@ -374,22 +387,13 @@
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        let decisionFinalVal = '';
-        for (let dCol of [41, 40, 42, 30]) {
-          if (dCol < numCols) {
-            const val = dataTable.getValue(i, dCol);
-            if (val) {
-              const str = val.toString().trim();
-              if (str.toLowerCase().includes('approve') || str.toLowerCase().includes('reject') || str.toLowerCase().includes('cancel')) {
-                decisionFinalVal = str;
-                break;
-              }
-            }
-          }
-        }
+        // NO DARI KOLOM A (INDEX 0)
+        let noVal = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || (i + 1);
 
-        if (!decisionFinalVal || !decisionFinalVal.toLowerCase().includes('approve')) {
-          continue;
+        // DECISION FINAL DARI KOLOM AQ (INDEX 42)
+        let decisionFinalVal = '-';
+        if (42 < numCols) {
+          decisionFinalVal = dataTable.getFormattedValue(i, 42) || dataTable.getValue(i, 42) || '-';
         }
 
         let isNonSurvey = false;
@@ -406,7 +410,7 @@
           }
         }
 
-        // TANGGAL SURVEY PROJECT: BACA DARI KOLOM Y (INDEX 24)
+        // TANGGAL SURVEY PROJECT: KOLOM Y (INDEX 24)
         let tglProjectVal = '';
         if (24 < numCols) {
           tglProjectVal = dataTable.getFormattedValue(i, 24) || dataTable.getValue(i, 24) || '';
@@ -423,7 +427,7 @@
           computedStatus = 'Non Survey';
         }
 
-        // LOKASI PROJECT: Membaca Kolom AB (Index 27)
+        // LOKASI PROJECT: KOLOM AB (INDEX 27)
         let lokasiProjectVal = '';
         for (let lCol of [27, 26, 28, 24, 25]) {
           if (lCol < numCols) {
@@ -436,7 +440,7 @@
         }
         if (!lokasiProjectVal) lokasiProjectVal = '-';
 
-        // APLIKASI OUT: Kolom AE (Index 30) & Bulan Out AF (Index 31)
+        // APLIKASI OUT: KOLOM AE (INDEX 30) & AF (INDEX 31)
         let rawAE = (30 < numCols) ? (dataTable.getFormattedValue(i, 30) || dataTable.getValue(i, 30) || '') : '';
         let rawAF = (31 < numCols) ? (dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '') : '';
 
@@ -462,6 +466,18 @@
           }
         }
 
+        // HITUNG TIME PROCESS (SELISIH APLIKASI OUT - TGL SURVEY PROJECT HARI)
+        let timeProcessVal = '-';
+        if (tglProjectVal && strOut && tglProjectVal !== '-' && strOut !== '-') {
+          const dateSurvey = new Date(tglProjectVal);
+          const dateAppOut = new Date(displayAplikasiOut);
+          if (!isNaN(dateSurvey) && !isNaN(dateAppOut)) {
+            const diffTime = Math.abs(dateSurvey - dateAppOut);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            timeProcessVal = `${diffDays} Hari`;
+          }
+        }
+
         let monthNum = 12;
         for (const [mKey, mVal] of Object.entries(monthOrderMap)) {
           if (fullCombo.toLowerCase().includes(mKey)) {
@@ -473,20 +489,22 @@
         const sortScore = parseInt(parsedYear) * 100 + monthNum;
 
         const item = {
-          inputDate: (0 < numCols) ? (dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '-') : '-',
+          no: noVal,
+          inputDate: noVal,
           debitur: debiturName,
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
           tglSurveyProject: formattedSurveyDate || (computedStatus === 'Completed' ? tglProjectVal : '-'),
+          timeProcess: timeProcessVal,
           statusSurvey: computedStatus,
+          decisionFinal: decisionFinalVal,
           lokasiProject: lokasiProjectVal,
           kota: lokasiProjectVal,
           provinsi: lokasiProjectVal,
           aplikasiOut: displayAplikasiOut || '-',
           parsedYear: parsedYear === '2099' ? '' : parsedYear,
-          sortScore: sortScore,
-          decisionFinal: decisionFinalVal || 'Approve'
+          sortScore: sortScore
         };
 
         globalTrackingData.push(item);
@@ -547,7 +565,6 @@
         currentFilteredTracking = currentFilteredTracking.filter(i => i.lokasiProject === selectedLocation);
       }
 
-      // FILTER TAHUN PRESISI (PENYESUAIAN FORMAT PARSEDYEAR & STRING TAHUN 2 ATAU 4 DIGIT)
       if (selectedTahun) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.parsedYear === selectedTahun || 
@@ -556,7 +573,6 @@
         );
       }
 
-      // FILTER BULAN PRESISI
       if (selectedBulan) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase())
@@ -631,24 +647,26 @@
         `).join('');
       }
 
-      // 3. History Table (MURNI MENAMPILKAN DATA HASIL FILTER)
+      // 3. Tracking Debitur Table
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
         historyBody.innerHTML = currentFilteredTracking.map(item => `
           <tr class="hover:bg-slate-700/50 text-slate-300 transition">
-            <td class="p-3 font-semibold text-slate-400">${formatDate(item.inputDate) || '-'}</td>
+            <td class="p-3 font-semibold text-slate-400">${item.no}</td>
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
             <td class="p-3 font-medium text-white">${item.debitur}</td>
             <td class="p-3 text-emerald-300 font-medium">${item.lokasiProject}</td>
             <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
             <td class="p-3">${item.kategoriSurvey}</td>
             <td class="p-3 text-slate-200 font-medium">${item.tglSurveyProject}</td>
+            <td class="p-3 text-amber-300 font-semibold">${item.timeProcess}</td>
             <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
+            <td class="p-3">${getDecisionBadge(item.decisionFinal)}</td>
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada data history survey yang sesuai dengan filter.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan filter.</td></tr>`;
       }
     }
 
