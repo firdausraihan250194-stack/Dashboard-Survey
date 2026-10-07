@@ -186,6 +186,7 @@
             <th class="p-3">Time Process</th>
             <th class="p-3">Status Survey</th>
             <th class="p-3">Decision Final</th>
+            <th class="p-3 text-center">Document</th>
           </tr>
         </thead>
         <tbody id="historyTableBody" class="divide-y divide-slate-700">
@@ -309,11 +310,20 @@
       }
     }
 
+    function getDocumentButton(docUrl) {
+      if (!docUrl || docUrl.trim() === '' || docUrl === '-') {
+        return `<span class="text-slate-500 font-medium">-</span>`;
+      }
+      return `<a href="${docUrl.trim()}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-2.5 py-1 rounded text-[11px] font-semibold transition">
+        <i class="fa-solid fa-file-pdf"></i> View PDF
+      </a>`;
+    }
+
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Query Tab 1: Data Request
-      const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&range=A1:AZ5000`);
+      // Query Tab 1: Data Request (Rentang A1:CB5000)
+      const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&range=A1:CB5000`);
       q1.send(res1 => {
         if (!res1.isError()) {
           processGVizDataRequest(res1.getDataTable());
@@ -322,8 +332,8 @@
         }
       });
 
-      // Query Tab 2: Tracking Aplikasi
-      const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&range=A1:AZ5000`);
+      // Query Tab 2: Tracking Aplikasi (Rentang A1:CB5000 agar mencakup Kolom BM / Index 64)
+      const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&range=A1:CB5000`);
       q2.send(res2 => {
         if (!res2.isError()) {
           processGVizTracking(res2.getDataTable());
@@ -387,13 +397,34 @@
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // NO DARI KOLOM A (INDEX 0)
         let noVal = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || (i + 1);
 
-        // DECISION FINAL DARI KOLOM AQ (INDEX 42)
+        // DECISION FINAL: KOLOM AQ (INDEX 42)
         let decisionFinalVal = '-';
         if (42 < numCols) {
           decisionFinalVal = dataTable.getFormattedValue(i, 42) || dataTable.getValue(i, 42) || '-';
+        }
+
+        // BACA LINK DOCUMENT PDF DARI KOLOM BM (INDEX 64) DENGAN FALLBACK
+        let docLinkVal = '-';
+        if (64 < numCols) {
+          const rawBM = dataTable.getValue(i, 64) || dataTable.getFormattedValue(i, 64) || '';
+          if (rawBM && rawBM.toString().trim() !== '' && rawBM.toString().trim() !== '-') {
+            docLinkVal = rawBM.toString().trim();
+          }
+        }
+
+        // CADANGAN JIKA TERTULIS DI KOLOM TERDEKAT
+        if (docLinkVal === '-') {
+          for (let colCheck of [63, 65, 43, 44]) {
+            if (colCheck < numCols) {
+              const val = dataTable.getValue(i, colCheck);
+              if (val && val.toString().trim().startsWith('http')) {
+                docLinkVal = val.toString().trim();
+                break;
+              }
+            }
+          }
         }
 
         let isNonSurvey = false;
@@ -466,7 +497,7 @@
           }
         }
 
-        // HITUNG TIME PROCESS (SELISIH APLIKASI OUT - TGL SURVEY PROJECT HARI)
+        // TIME PROCESS
         let timeProcessVal = '-';
         if (tglProjectVal && strOut && tglProjectVal !== '-' && strOut !== '-') {
           const dateSurvey = new Date(tglProjectVal);
@@ -499,6 +530,7 @@
           timeProcess: timeProcessVal,
           statusSurvey: computedStatus,
           decisionFinal: decisionFinalVal,
+          docLink: docLinkVal,
           lokasiProject: lokasiProjectVal,
           kota: lokasiProjectVal,
           provinsi: lokasiProjectVal,
@@ -663,10 +695,11 @@
             <td class="p-3 text-amber-300 font-semibold">${item.timeProcess}</td>
             <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
             <td class="p-3">${getDecisionBadge(item.decisionFinal)}</td>
+            <td class="p-3 text-center">${getDocumentButton(item.docLink)}</td>
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan filter.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan filter.</td></tr>`;
       }
     }
 
