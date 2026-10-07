@@ -383,7 +383,6 @@
         const debiturName = dataTable.getValue(i, 1);
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
-        // VERIFIKASI DECISION APPROVAL (APPROVE ONLY)
         let decisionFinalVal = '';
         for (let dCol of [41, 40, 42, 30]) {
           if (dCol < numCols) {
@@ -399,7 +398,7 @@
         }
 
         if (!decisionFinalVal || !decisionFinalVal.toLowerCase().includes('approve')) {
-          continue; // Lewati jika bukan Approve / Approved
+          continue;
         }
 
         let isNonSurvey = false;
@@ -432,7 +431,6 @@
           computedStatus = 'Non Survey';
         }
 
-        // LOKASI PROJECT: Membaca Kolom AB (Index 27)
         let lokasiProjectVal = '';
         for (let lCol of [27, 26, 28, 24, 25]) {
           if (lCol < numCols) {
@@ -445,7 +443,6 @@
         }
         if (!lokasiProjectVal) lokasiProjectVal = '-';
 
-        // TANGGAL APLIKASI OUT: Kolom AE (Index 30) & AF (Index 31)
         let rawAE = (30 < numCols) ? (dataTable.getFormattedValue(i, 30) || dataTable.getValue(i, 30) || '') : '';
         let rawAF = (31 < numCols) ? (dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '') : '';
 
@@ -504,16 +501,23 @@
 
     function populateLocationFilter() {
       const filterSelect = document.getElementById('filterLokasi');
+      const currentVal = filterSelect.value;
+
       const uniqueLocations = [...new Set(globalTrackingData.map(i => i.lokasiProject).filter(l => l && l !== '-'))];
 
       filterSelect.innerHTML = '<option value="">Semua Lokasi / Kota</option>';
       uniqueLocations.forEach(loc => {
         filterSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
       });
+
+      if (currentVal && uniqueLocations.includes(currentVal)) {
+        filterSelect.value = currentVal;
+      }
     }
 
     function populateAplikasiOutFilters() {
       const filterTahunSelect = document.getElementById('filterTahunOut');
+      const currentYearVal = filterTahunSelect.value;
 
       const years = new Set();
       globalTrackingData.forEach(item => {
@@ -530,6 +534,10 @@
       Array.from(years).sort().reverse().forEach(yr => {
         filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
       });
+
+      if (currentYearVal && years.has(currentYearVal)) {
+        filterTahunSelect.value = currentYearVal;
+      }
     }
 
     function renderDashboard() {
@@ -581,7 +589,7 @@
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue Table
+      // 1. Top 10 Active Priority Queue
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -627,12 +635,11 @@
         `).join('');
       }
 
-      // 3. History Table (MURNI HEADER RAPI TANPA PETUNJUK KOLOM)
+      // 3. History Table (MURNI MENAMPILKAN HASIL FILTER PADA BOTTON / SELECT)
       const historyBody = document.getElementById('historyTableBody');
-      const displayData = currentFilteredTracking.length > 0 ? currentFilteredTracking : globalTrackingData;
 
-      if (displayData.length > 0) {
-        historyBody.innerHTML = displayData.map(item => `
+      if (currentFilteredTracking.length > 0) {
+        historyBody.innerHTML = currentFilteredTracking.map(item => `
           <tr class="hover:bg-slate-700/50 text-slate-300 transition">
             <td class="p-3 font-semibold text-slate-400">${formatDate(item.inputDate) || '-'}</td>
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
@@ -645,7 +652,7 @@
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Belum ada history survey.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada data history survey yang sesuai dengan filter.</td></tr>`;
       }
     }
 
