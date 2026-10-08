@@ -179,7 +179,7 @@
 
   </div>
 
-  <!-- Tracking Debitur Section -->
+  <!-- Tracking Debitur Section (URUTAN HEADER BARU) -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <h2 class="text-lg font-bold text-blue-400 flex items-center gap-2">
@@ -192,7 +192,7 @@
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
           <input type="text" id="searchTrackingInput" onkeyup="renderDashboard()" placeholder="Cari CRM, debitur, marketing, lokasi..." class="bg-slate-700 text-xs text-white pl-8 pr-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-blue-500 w-full placeholder-slate-400 transition">
         </div>
-        <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-500/30 whitespace-nowrap font-medium">All Records</span>
+        <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-500/30 whitespace-nowrap font-medium">Filtered Records</span>
       </div>
     </div>
 
@@ -202,15 +202,13 @@
           <tr>
             <th class="p-3">No</th>
             <th class="p-3">Nama Marketing</th>
-            <th class="p-3">Nama Debitur / Customer</th>
+            <th class="p-3">Nama Debitur</th>
             <th class="p-3">No CRM</th>
-            <th class="p-3">Lokasi Project</th>
-            <th class="p-3">Aplikasi Out</th>
-            <th class="p-3">Kategori Survey</th>
-            <th class="p-3">Tgl Survey Project</th>
-            <th class="p-3">Time Process</th>
-            <th class="p-3">Status Survey</th>
             <th class="p-3">Decision Final</th>
+            <th class="p-3">Aplikasi Out</th>
+            <th class="p-3">Status Survey</th>
+            <th class="p-3">Lokasi Project</th>
+            <th class="p-3">Time Process</th>
             <th class="p-3 text-center">Document</th>
           </tr>
         </thead>
@@ -221,7 +219,7 @@
     </div>
   </section>
 
-  <!-- POPUP MODAL BREAKDOWN DECISION FINAL (NEW) -->
+  <!-- POPUP MODAL BREAKDOWN DECISION FINAL -->
   <div id="decisionModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
@@ -523,7 +521,7 @@
         let strOut = rawAE.toString().trim();
         let strBulanOut = rawAF.toString().trim();
 
-        let parsedYear = '2099';
+        let parsedYear = '';
         const fullCombo = `${strOut} ${strBulanOut}`;
 
         const yMatch4 = fullCombo.match(/202[3-9]/);
@@ -536,7 +534,7 @@
         }
 
         let displayAplikasiOut = strOut;
-        if (parsedYear !== '2099' && strOut && strOut !== '-') {
+        if (parsedYear !== '' && strOut && strOut !== '-') {
           if (!strOut.includes(parsedYear) && !strOut.includes(parsedYear.slice(-2))) {
             displayAplikasiOut = `${strOut}-${parsedYear}`;
           }
@@ -561,7 +559,7 @@
           }
         }
 
-        const sortScore = parseInt(parsedYear) * 100 + monthNum;
+        const sortScore = (parsedYear ? parseInt(parsedYear) : 2099) * 100 + monthNum;
 
         const item = {
           no: noVal,
@@ -580,7 +578,8 @@
           kota: lokasiProjectVal,
           provinsi: lokasiProjectVal,
           aplikasiOut: displayAplikasiOut || '-',
-          parsedYear: parsedYear === '2099' ? '' : parsedYear,
+          rawAplikasiOut: fullCombo,
+          parsedYear: parsedYear,
           sortScore: sortScore
         };
 
@@ -643,17 +642,20 @@
         currentFilteredTracking = currentFilteredTracking.filter(i => i.lokasiProject === selectedLocation);
       }
 
+      // PERBAIKAN FILTER TAHUN TRACKING DEBITUR
       if (selectedTahun) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.parsedYear === selectedTahun || 
           i.aplikasiOut.includes(selectedTahun) || 
-          i.aplikasiOut.includes(selectedTahun.slice(-2))
+          i.aplikasiOut.includes(selectedTahun.slice(-2)) ||
+          i.rawAplikasiOut.includes(selectedTahun)
         );
       }
 
       if (selectedBulan) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
-          i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase())
+          i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase()) ||
+          i.rawAplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase())
         );
       }
 
@@ -743,7 +745,7 @@
         `).join('');
       }
 
-      // 3. Tracking Debitur Table
+      // 3. Tracking Debitur Table (DENGAN URUTAN SUB-HEADER PRESISI SAMA PERSIS INSTRUKSI)
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
@@ -753,22 +755,19 @@
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
             <td class="p-3 font-medium text-white">${item.debitur}</td>
             <td class="p-3 font-mono text-emerald-300 text-[11px]">${item.noCRM}</td>
-            <td class="p-3 text-emerald-300 font-medium">${item.lokasiProject}</td>
-            <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
-            <td class="p-3">${item.kategoriSurvey}</td>
-            <td class="p-3 text-slate-200 font-medium">${item.tglSurveyProject}</td>
-            <td class="p-3 text-amber-300 font-semibold">${item.timeProcess}</td>
-            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
             <td class="p-3">${getDecisionBadge(item.decisionFinal)}</td>
+            <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
+            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
+            <td class="p-3 text-emerald-300 font-medium">${item.lokasiProject}</td>
+            <td class="p-3 text-amber-300 font-semibold">${item.timeProcess}</td>
             <td class="p-3 text-center">${getDocumentButton(item.docLink)}</td>
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan pencarian/filter.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan pencarian/filter.</td></tr>`;
       }
     }
 
-    // FUNGSIONALITAS BARU: SHOW DECISION BREAKDOWN MODAL
     function showDecisionBreakdown(categoryTarget) {
       let items = [];
       let titleText = "";
@@ -802,7 +801,6 @@
       document.getElementById('decisionModalTitle').innerText = `Breakdown Decision Final: ${titleText}`;
       document.getElementById('decisionModalSub').innerText = `Total Kategori: ${items.length} Record`;
 
-      // Render Summary Cards
       const summaryContainer = document.getElementById('decisionSummaryCards');
       summaryContainer.innerHTML = `
         <div class="bg-slate-900/80 p-3 rounded-lg border border-blue-500/30">
@@ -823,7 +821,6 @@
         </div>
       `;
 
-      // Render Table Data
       const tableBody = document.getElementById('decisionModalTableBody');
       if (items.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data untuk kategori ini.</td></tr>`;
