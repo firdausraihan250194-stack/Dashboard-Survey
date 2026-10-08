@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -130,7 +129,7 @@
   <!-- Main Grid Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
-    <!-- Top 10 Priority Request Survey (DENGAN TGL SURVEY & TIME PROCESS) -->
+    <!-- Top 10 Priority Request Survey -->
     <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-amber-400">
@@ -159,7 +158,7 @@
       </div>
     </div>
 
-    <!-- Top 10 Lokasi Request (HEADER DIPERKECIL) -->
+    <!-- Top 10 Lokasi Request -->
     <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
       <h2 class="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
         <i class="fa-solid fa-map-location-dot"></i>Top 10 Lokasi Request
@@ -171,7 +170,7 @@
 
   </div>
 
-  <!-- Tracking Debitur Section (DENGAN FITUR SEARCH BUTTON) -->
+  <!-- Tracking Debitur Section -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <h2 class="text-lg font-bold text-blue-400 flex items-center gap-2">
@@ -182,7 +181,7 @@
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <div class="relative w-full sm:w-64">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-          <input type="text" id="searchTrackingInput" onkeyup="renderDashboard()" placeholder="Cari debitur, marketing, lokasi..." class="bg-slate-700 text-xs text-white pl-8 pr-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-blue-500 w-full placeholder-slate-400 transition">
+          <input type="text" id="searchTrackingInput" onkeyup="renderDashboard()" placeholder="Cari CRM, debitur, marketing, lokasi..." class="bg-slate-700 text-xs text-white pl-8 pr-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-blue-500 w-full placeholder-slate-400 transition">
         </div>
         <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-500/30 whitespace-nowrap font-medium">All Records</span>
       </div>
@@ -195,6 +194,7 @@
             <th class="p-3">No</th>
             <th class="p-3">Nama Marketing</th>
             <th class="p-3">Nama Debitur / Customer</th>
+            <th class="p-3">No CRM</th>
             <th class="p-3">Lokasi Project</th>
             <th class="p-3">Aplikasi Out</th>
             <th class="p-3">Kategori Survey</th>
@@ -369,6 +369,7 @@
         const customerName = dataTable.getValue(i, 2);
         if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') continue;
 
+        const rawInputDate = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '';
         const rawDateField = dataTable.getFormattedValue(i, 12) || dataTable.getValue(i, 12) || '';
         const formattedDateField = formatDate(rawDateField);
 
@@ -382,11 +383,9 @@
           statusSurveyVal = val13.trim();
         }
 
-        // AMBIL WAKTU WAKTU SURVEY & SELISIH WAKTU
-        let tglSurveyProj = formattedDateField || '-';
         let timeProc = '-';
-        if (formattedDateField && itemInputDate) {
-          const d1 = new Date(dataTable.getValue(i, 0));
+        if (rawDateField && rawInputDate) {
+          const d1 = new Date(rawInputDate);
           const d2 = new Date(rawDateField);
           if (!isNaN(d1) && !isNaN(d2)) {
             timeProc = `${Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24))} Hari`;
@@ -394,13 +393,13 @@
         }
 
         const item = {
-          inputDate: dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '',
+          inputDate: formatDate(rawInputDate) || rawInputDate,
           marketing: dataTable.getValue(i, 1) || '-',
           customer: customerName,
           kota: dataTable.getValue(i, 7) || '',
           kabupaten: dataTable.getValue(i, 8) || '',
           requestDate: dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '',
-          surveyDateField: tglSurveyProj,
+          surveyDateField: formattedDateField || '-',
           timeProcess: timeProc,
           statusSurvey: statusSurveyVal,
           aplikasiOut: '-'
@@ -408,7 +407,7 @@
 
         globalAllHistoryRequests.push(item);
 
-        if (item.statusSurvey.toLowerCase() !== 'done') {
+        if (item.statusSurvey.toLowerCase() !== 'done' && item.statusSurvey.toLowerCase() !== 'completed') {
           globalActiveRequests.push(item);
         }
       }
@@ -426,6 +425,12 @@
         if (!debiturName || debiturName.toString().trim() === '' || debiturName.toLowerCase() === 'nama debitur') continue;
 
         let noVal = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || (i + 1);
+
+        // BACA NO CRM DARI KOLOM E (INDEX 4)
+        let crmNoVal = '-';
+        if (4 < numCols) {
+          crmNoVal = dataTable.getFormattedValue(i, 4) || dataTable.getValue(i, 4) || '-';
+        }
 
         // DECISION FINAL: KOLOM AQ (INDEX 42)
         let decisionFinalVal = '-';
@@ -550,6 +555,7 @@
           no: noVal,
           inputDate: noVal,
           debitur: debiturName,
+          noCRM: crmNoVal,
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
@@ -645,6 +651,7 @@
           i.no.toString().toLowerCase().includes(searchQuery) ||
           i.marketing.toLowerCase().includes(searchQuery) ||
           i.debitur.toLowerCase().includes(searchQuery) ||
+          i.noCRM.toLowerCase().includes(searchQuery) ||
           i.lokasiProject.toLowerCase().includes(searchQuery) ||
           i.aplikasiOut.toLowerCase().includes(searchQuery) ||
           i.kategoriSurvey.toLowerCase().includes(searchQuery) ||
@@ -677,7 +684,7 @@
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue (TERMASUK TGL SURVEY & TIME PROCESS)
+      // 1. Top 10 Active Queue
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
@@ -687,7 +694,7 @@
         top10Body.innerHTML = top10Active.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 transition">
             <td class="p-3 font-bold text-amber-400">#${idx + 1}</td>
-            <td class="p-3 text-slate-300">${formatDate(item.inputDate)}</td>
+            <td class="p-3 text-slate-300">${item.inputDate}</td>
             <td class="p-3 font-semibold text-white">${item.customer}</td>
             <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
             <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
@@ -698,7 +705,7 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi (HEADER & DOKUMEN LEBIH RINGKAS)
+      // 2. Top 10 Lokasi
       const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
@@ -725,7 +732,7 @@
         `).join('');
       }
 
-      // 3. Tracking Debitur Table (DENGAN REFRESH REAL-TIME HASIL SEARCH)
+      // 3. Tracking Debitur Table (DENGAN NO CRM)
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
@@ -734,6 +741,7 @@
             <td class="p-3 font-semibold text-slate-400">${item.no}</td>
             <td class="p-3 font-semibold text-blue-300">${item.marketing}</td>
             <td class="p-3 font-medium text-white">${item.debitur}</td>
+            <td class="p-3 font-mono text-emerald-300 text-[11px]">${item.noCRM}</td>
             <td class="p-3 text-emerald-300 font-medium">${item.lokasiProject}</td>
             <td class="p-3 font-semibold text-emerald-400">${item.aplikasiOut}</td>
             <td class="p-3">${item.kategoriSurvey}</td>
@@ -745,7 +753,7 @@
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan pencarian/filter.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan pencarian/filter.</td></tr>`;
       }
     }
 
