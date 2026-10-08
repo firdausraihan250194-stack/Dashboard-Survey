@@ -179,7 +179,7 @@
 
   </div>
 
-  <!-- Tracking Debitur Section (URUTAN HEADER BARU) -->
+  <!-- Tracking Debitur Section -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <h2 class="text-lg font-bold text-blue-400 flex items-center gap-2">
@@ -311,6 +311,21 @@
         }
       }
       return val;
+    }
+
+    function extractYear(valStr) {
+      if (!valStr) return '';
+      const str = valStr.toString().trim();
+      const match4 = str.match(/\b(202[3-9])\b/);
+      if (match4) return match4[1];
+      
+      const parts = str.split('-');
+      if (parts.length === 3) {
+        const yr = parts[2].trim();
+        if (yr.length === 4) return yr;
+        if (yr.length === 2) return '20' + yr;
+      }
+      return '';
     }
 
     function getStatusBadge(status) {
@@ -520,18 +535,9 @@
 
         let strOut = rawAE.toString().trim();
         let strBulanOut = rawAF.toString().trim();
-
-        let parsedYear = '';
         const fullCombo = `${strOut} ${strBulanOut}`;
 
-        const yMatch4 = fullCombo.match(/202[3-9]/);
-        const yMatch2 = fullCombo.match(/-(2[3-9])/);
-
-        if (yMatch4) {
-          parsedYear = yMatch4[0];
-        } else if (yMatch2) {
-          parsedYear = '20' + yMatch2[1];
-        }
+        let parsedYear = extractYear(strOut) || extractYear(strBulanOut) || extractYear(fullCombo);
 
         let displayAplikasiOut = strOut;
         if (parsedYear !== '' && strOut && strOut !== '-') {
@@ -642,14 +648,13 @@
         currentFilteredTracking = currentFilteredTracking.filter(i => i.lokasiProject === selectedLocation);
       }
 
-      // PERBAIKAN FILTER TAHUN TRACKING DEBITUR
+      // PERBAIKAN LOGIKA FILTER TAHUN STRICT MATCHING
       if (selectedTahun) {
-        currentFilteredTracking = currentFilteredTracking.filter(i => 
-          i.parsedYear === selectedTahun || 
-          i.aplikasiOut.includes(selectedTahun) || 
-          i.aplikasiOut.includes(selectedTahun.slice(-2)) ||
-          i.rawAplikasiOut.includes(selectedTahun)
-        );
+        currentFilteredTracking = currentFilteredTracking.filter(i => {
+          if (i.parsedYear && i.parsedYear === selectedTahun) return true;
+          const extracted = extractYear(i.aplikasiOut) || extractYear(i.rawAplikasiOut);
+          return extracted === selectedTahun;
+        });
       }
 
       if (selectedBulan) {
@@ -745,7 +750,7 @@
         `).join('');
       }
 
-      // 3. Tracking Debitur Table (DENGAN URUTAN SUB-HEADER PRESISI SAMA PERSIS INSTRUKSI)
+      // 3. Tracking Debitur Table
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
