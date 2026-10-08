@@ -341,7 +341,7 @@
       } else if (s.toLowerCase() === 'pending') {
         return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
       } else {
-        return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
       }
     }
 
@@ -699,14 +699,16 @@
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
+      // LOGIKA PENGHITUNGAN DIREVISI AGAR MEMBACA TANGGAL / 'DONE' SEBAGAI COMPLETED
       currentFilteredTracking.forEach(t => {
         if (t.isNonSurvey) {
           nonSurveyTotal++;
         } else {
-          if (t.statusSurvey === 'Completed') {
-            wajibDone++;
-          } else if (t.statusSurvey === 'Pending') {
+          const st = (t.statusSurvey || '').toString().toLowerCase().trim();
+          if (st === 'pending') {
             wajibPending++;
+          } else if (st !== '-' && st !== '') {
+            wajibDone++;
           }
         }
       });
@@ -793,10 +795,10 @@
       let titleText = "";
 
       if (categoryTarget === 'Completed') {
-        items = currentFilteredTracking.filter(i => i.statusSurvey === 'Completed' && !i.isNonSurvey);
+        items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.statusSurvey !== 'Pending' && i.statusSurvey !== '-');
         titleText = "Completed (Done)";
       } else if (categoryTarget === 'Pending') {
-        items = currentFilteredTracking.filter(i => i.statusSurvey === 'Pending' && !i.isNonSurvey);
+        items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.statusSurvey === 'Pending');
         titleText = "Pending Survey";
       } else if (categoryTarget === 'Non Survey') {
         items = currentFilteredTracking.filter(i => i.isNonSurvey);
