@@ -108,11 +108,11 @@
         <div onclick="showDecisionBreakdown('Non Survey')" class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-500/30 hover:border-slate-400 hover:bg-slate-700/40 cursor-pointer transition group">
           <div class="flex items-center justify-between">
             <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-slate-200">
-              <i class="fa-solid fa-user-xmark text-slate-400 text-[10px]"></i> Non Survey
+              <i class="fa-solid fa-user-xmark text-amber-400 text-[10px]"></i> Non Survey
             </p>
-            <span class="text-[9px] bg-slate-500/20 text-slate-300 px-1.5 py-0.5 rounded font-medium border border-slate-500/30">Breakdown</span>
+            <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-medium border border-amber-500/30">Breakdown</span>
           </div>
-          <p id="statNonSurvey" class="text-lg font-bold text-slate-300 mt-0.5">0</p>
+          <p id="statNonSurvey" class="text-lg font-bold text-amber-300 mt-0.5">0</p>
         </div>
       </div>
     </div>
@@ -332,6 +332,9 @@
       const s = (status || 'On Process').toString().trim();
       if (s === '-') {
         return `<span class="text-slate-500 font-medium">-</span>`;
+      }
+      if (s.toLowerCase() === 'non survey') {
+        return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Non Survey</span>`;
       }
       if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
@@ -699,7 +702,6 @@
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
-      // LOGIKA PENGHITUNGAN DIREVISI AGAR MEMBACA TANGGAL / 'DONE' SEBAGAI COMPLETED
       currentFilteredTracking.forEach(t => {
         if (t.isNonSurvey) {
           nonSurveyTotal++;
