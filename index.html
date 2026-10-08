@@ -339,9 +339,7 @@
       if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
       }
-      if (s.toLowerCase() === 'done' || s.toLowerCase() === 'completed') {
-        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Completed</span>`;
-      } else if (s.toLowerCase() === 'pending') {
+      if (s.toLowerCase() === 'pending') {
         return `<span class="bg-red-500/20 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Pending</span>`;
       } else {
         return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
@@ -508,6 +506,7 @@
           }
         }
 
+        // AMBIL DATA HANYA DARI KOLOM Y (INDEX 24) ATAU KOLOM Z (INDEX 25)
         let tglProjectVal = '';
         if (24 < numCols) {
           tglProjectVal = dataTable.getFormattedValue(i, 24) || dataTable.getValue(i, 24) || '';
@@ -520,20 +519,23 @@
 
         let formattedSurveyDate = formatDate(tglProjectVal);
 
+        // SYARAT PENTING: JIKA KOLOM Y / Z TERISI TANGGAL ATAU TEKS, DIANGGAP ADA SURVEY (COMPLETED)
+        let hasSurveyData = false;
         let computedStatus = 'Pending';
+
         if (statusSurveyFromSheet && statusSurveyFromSheet.toString().trim() !== '' && statusSurveyFromSheet.toString().trim() !== '-') {
           computedStatus = statusSurveyFromSheet.toString().trim();
+          hasSurveyData = true;
         } else if (tglProjectVal && tglProjectVal.toString().trim() !== '' && tglProjectVal.toString().trim() !== '-') {
           computedStatus = formattedSurveyDate || tglProjectVal.toString().trim();
-        }
-
-        if (isNonSurvey) {
+          hasSurveyData = true;
+        } else if (isNonSurvey) {
           computedStatus = 'Non Survey';
         }
 
-        // BILA DECISION FINAL BERISI REJECT ATAU CANCEL, STATUS SURVEY MENJADI '-'
+        // BILA REJECT/CANCEL DAN KOLOM Y/Z SAMA SEKALI KOSONG, TAMPILAN SURVEY JADI '-'
         const decLower = decisionFinalVal.toLowerCase();
-        if (decLower.includes('reject') || decLower.includes('cancel')) {
+        if ((decLower.includes('reject') || decLower.includes('cancel')) && !hasSurveyData) {
           computedStatus = '-';
         }
 
@@ -593,8 +595,9 @@
           noCRM: crmNoVal,
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
+          hasSurveyData: hasSurveyData,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
-          tglSurveyProject: formattedSurveyDate || (computedStatus.toLowerCase() === 'done' || computedStatus.toLowerCase() === 'completed' ? tglProjectVal : '-'),
+          tglSurveyProject: formattedSurveyDate || (hasSurveyData ? tglProjectVal : '-'),
           timeProcess: timeProcessVal,
           statusSurvey: computedStatus,
           decisionFinal: decisionFinalVal,
@@ -702,16 +705,14 @@
       let wajibPending = 0;
       let nonSurveyTotal = 0;
 
+      // HANYA MENGGUNAKAN INDIKATOR hasSurveyData (ISI KOLOM Y/Z TERISI) UNTUK HITUNGAN COMPLETED
       currentFilteredTracking.forEach(t => {
-        if (t.isNonSurvey) {
+        if (t.hasSurveyData) {
+          wajibDone++;
+        } else if (t.isNonSurvey || t.statusSurvey === 'Non Survey') {
           nonSurveyTotal++;
-        } else {
-          const st = (t.statusSurvey || '').toString().toLowerCase().trim();
-          if (st === 'pending') {
-            wajibPending++;
-          } else if (st !== '-' && st !== '') {
-            wajibDone++;
-          }
+        } else if (t.statusSurvey === 'Pending') {
+          wajibPending++;
         }
       });
 
@@ -797,13 +798,13 @@
       let titleText = "";
 
       if (categoryTarget === 'Completed') {
-        items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.statusSurvey !== 'Pending' && i.statusSurvey !== '-');
+        items = currentFilteredTracking.filter(i => i.hasSurveyData);
         titleText = "Completed (Done)";
       } else if (categoryTarget === 'Pending') {
-        items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.statusSurvey === 'Pending');
+        items = currentFilteredTracking.filter(i => !i.hasSurveyData && !i.isNonSurvey && i.statusSurvey === 'Pending');
         titleText = "Pending Survey";
       } else if (categoryTarget === 'Non Survey') {
-        items = currentFilteredTracking.filter(i => i.isNonSurvey);
+        items = currentFilteredTracking.filter(i => !i.hasSurveyData && i.isNonSurvey);
         titleText = "Non Survey";
       }
 
