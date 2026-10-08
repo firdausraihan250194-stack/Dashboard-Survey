@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -128,6 +129,8 @@
 
   <!-- Main Grid Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Top 10 Priority Request Survey (DENGAN TGL SURVEY & TIME PROCESS) -->
     <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-amber-400">
@@ -144,6 +147,8 @@
               <th class="p-3">Nama Customer</th>
               <th class="p-3">Lokasi Project</th>
               <th class="p-3">Request Tanggal</th>
+              <th class="p-3">Tgl Survey Project</th>
+              <th class="p-3">Time Process</th>
               <th class="p-3">Status Survey</th>
             </tr>
           </thead>
@@ -154,24 +159,35 @@
       </div>
     </div>
 
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
-      <h2 class="text-lg font-bold text-emerald-400 mb-4">
-        <i class="fa-solid fa-map-location-dot mr-2"></i>Top 10 Lokasi Request
+    <!-- Top 10 Lokasi Request (HEADER DIPERKECIL) -->
+    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+      <h2 class="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-map-location-dot"></i>Top 10 Lokasi Request
       </h2>
-      <ul id="locationList" class="space-y-3 text-sm">
+      <ul id="locationList" class="space-y-2 text-xs">
         <!-- Render via JS -->
       </ul>
     </div>
+
   </div>
 
-  <!-- Tracking Debitur Section -->
+  <!-- Tracking Debitur Section (DENGAN FITUR SEARCH BUTTON) -->
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-bold text-blue-400">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i>Tracking Debitur
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+      <h2 class="text-lg font-bold text-blue-400 flex items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left"></i>Tracking Debitur
       </h2>
-      <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">All Records</span>
+      
+      <!-- Input Search Interaktif -->
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+          <input type="text" id="searchTrackingInput" onkeyup="renderDashboard()" placeholder="Cari debitur, marketing, lokasi..." class="bg-slate-700 text-xs text-white pl-8 pr-3 py-1.5 rounded-lg border border-slate-600 focus:outline-none focus:border-blue-500 w-full placeholder-slate-400 transition">
+        </div>
+        <span class="text-xs bg-blue-500/20 text-blue-300 px-2.5 py-1.5 rounded-lg border border-blue-500/30 whitespace-nowrap font-medium">All Records</span>
+      </div>
     </div>
+
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
         <thead class="bg-slate-700 text-slate-300 uppercase">
@@ -322,7 +338,7 @@
     function loadAndProcessData() {
       document.getElementById('lastUpdate').innerText = "Memuat data...";
 
-      // Query Tab 1: Data Request (Rentang A1:CB5000)
+      // Query Tab 1: Data Request
       const q1 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Data%20Request&range=A1:CB5000`);
       q1.send(res1 => {
         if (!res1.isError()) {
@@ -332,7 +348,7 @@
         }
       });
 
-      // Query Tab 2: Tracking Aplikasi (Rentang A1:CB5000 agar mencakup Kolom BM / Index 64)
+      // Query Tab 2: Tracking Aplikasi
       const q2 = new google.visualization.Query(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=Tracking%20Aplikasi&range=A1:CB5000`);
       q2.send(res2 => {
         if (!res2.isError()) {
@@ -366,6 +382,17 @@
           statusSurveyVal = val13.trim();
         }
 
+        // AMBIL WAKTU WAKTU SURVEY & SELISIH WAKTU
+        let tglSurveyProj = formattedDateField || '-';
+        let timeProc = '-';
+        if (formattedDateField && itemInputDate) {
+          const d1 = new Date(dataTable.getValue(i, 0));
+          const d2 = new Date(rawDateField);
+          if (!isNaN(d1) && !isNaN(d2)) {
+            timeProc = `${Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24))} Hari`;
+          }
+        }
+
         const item = {
           inputDate: dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '',
           marketing: dataTable.getValue(i, 1) || '-',
@@ -373,7 +400,8 @@
           kota: dataTable.getValue(i, 7) || '',
           kabupaten: dataTable.getValue(i, 8) || '',
           requestDate: dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '',
-          surveyDateField: formattedDateField,
+          surveyDateField: tglSurveyProj,
+          timeProcess: timeProc,
           statusSurvey: statusSurveyVal,
           aplikasiOut: '-'
         };
@@ -405,7 +433,7 @@
           decisionFinalVal = dataTable.getFormattedValue(i, 42) || dataTable.getValue(i, 42) || '-';
         }
 
-        // BACA LINK DOCUMENT PDF DARI KOLOM BM (INDEX 64) DENGAN FALLBACK
+        // BACA LINK DOCUMENT PDF DARI KOLOM BM (INDEX 64)
         let docLinkVal = '-';
         if (64 < numCols) {
           const rawBM = dataTable.getValue(i, 64) || dataTable.getFormattedValue(i, 64) || '';
@@ -414,7 +442,6 @@
           }
         }
 
-        // CADANGAN JIKA TERTULIS DI KOLOM TERDEKAT
         if (docLinkVal === '-') {
           for (let colCheck of [63, 65, 43, 44]) {
             if (colCheck < numCols) {
@@ -588,6 +615,7 @@
       const selectedLocation = document.getElementById('filterLokasi').value;
       const selectedTahun = document.getElementById('filterTahunOut').value;
       const selectedBulan = document.getElementById('filterBulanOut').value;
+      const searchQuery = (document.getElementById('searchTrackingInput')?.value || '').toLowerCase().trim();
 
       let filteredActive = globalActiveRequests;
       currentFilteredTracking = globalTrackingData;
@@ -608,6 +636,22 @@
       if (selectedBulan) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.aplikasiOut.toLowerCase().includes(selectedBulan.toLowerCase())
+        );
+      }
+
+      // AKSI FITUR SEARCHING INPUT
+      if (searchQuery) {
+        currentFilteredTracking = currentFilteredTracking.filter(i => 
+          i.no.toString().toLowerCase().includes(searchQuery) ||
+          i.marketing.toLowerCase().includes(searchQuery) ||
+          i.debitur.toLowerCase().includes(searchQuery) ||
+          i.lokasiProject.toLowerCase().includes(searchQuery) ||
+          i.aplikasiOut.toLowerCase().includes(searchQuery) ||
+          i.kategoriSurvey.toLowerCase().includes(searchQuery) ||
+          i.tglSurveyProject.toLowerCase().includes(searchQuery) ||
+          i.timeProcess.toLowerCase().includes(searchQuery) ||
+          i.statusSurvey.toLowerCase().includes(searchQuery) ||
+          i.decisionFinal.toLowerCase().includes(searchQuery)
         );
       }
 
@@ -633,12 +677,12 @@
       document.getElementById('statNonSurvey').innerText = nonSurveyTotal;
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue
+      // 1. Top 10 Active Queue (TERMASUK TGL SURVEY & TIME PROCESS)
       const top10Active = filteredActive.slice(0, 10);
       const top10Body = document.getElementById('top10TableBody');
 
       if (top10Active.length === 0) {
-        top10Body.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
+        top10Body.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
       } else {
         top10Body.innerHTML = top10Active.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 transition">
@@ -647,12 +691,14 @@
             <td class="p-3 font-semibold text-white">${item.customer}</td>
             <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
             <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
+            <td class="p-3 text-slate-200 font-medium">${item.surveyDateField || '-'}</td>
+            <td class="p-3 text-amber-300 font-semibold">${item.timeProcess || '-'}</td>
             <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
         `).join('');
       }
 
-      // 2. Top 10 Lokasi
+      // 2. Top 10 Lokasi (HEADER & DOKUMEN LEBIH RINGKAS)
       const locationMap = {};
       globalActiveRequests.forEach(item => {
         const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
@@ -670,16 +716,16 @@
         locList.innerHTML = `<li class="text-slate-500 text-xs">Belum ada data lokasi.</li>`;
       } else {
         locList.innerHTML = sortedLocations.map(loc => `
-          <li class="flex justify-between items-center bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition">
-            <span class="text-slate-300 font-medium">${loc.location}</span>
-            <button onclick="showLocationBreakdown('${encodeURIComponent(loc.location)}')" class="font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded text-xs transition flex items-center gap-1 cursor-pointer">
-              <i class="fa-solid fa-users text-[10px]"></i> ${loc.count} Request
+          <li class="flex justify-between items-center bg-slate-700/40 p-2 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition">
+            <span class="text-slate-300 font-medium truncate">${loc.location}</span>
+            <button onclick="showLocationBreakdown('${encodeURIComponent(loc.location)}')" class="font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded text-[11px] transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-users text-[9px]"></i> ${loc.count} Request
             </button>
           </li>
         `).join('');
       }
 
-      // 3. Tracking Debitur Table
+      // 3. Tracking Debitur Table (DENGAN REFRESH REAL-TIME HASIL SEARCH)
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
@@ -699,7 +745,7 @@
           </tr>
         `).join('');
       } else {
-        historyBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan filter.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-500">Tidak ada data tracking debitur yang sesuai dengan pencarian/filter.</td></tr>`;
       }
     }
 
