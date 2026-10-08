@@ -80,29 +80,38 @@
         </div>
       </div>
       
-      <!-- Sub-Box Status -->
+      <!-- Sub-Box Status Interaktif -->
       <div class="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-700/80">
-        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20">
-          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
-            <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Completed (Done)
-          </p>
+        <!-- Completed (Done) -->
+        <div onclick="showDecisionBreakdown('Completed')" class="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/30 hover:border-emerald-500/80 hover:bg-emerald-500/10 cursor-pointer transition group">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-emerald-300">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> Completed (Done)
+            </p>
+            <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-medium border border-emerald-500/30">Breakdown</span>
+          </div>
           <p id="statWajibDone" class="text-lg font-bold text-emerald-400 mt-0.5">0</p>
         </div>
 
-        <div onclick="showPendingModal()" class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/30 hover:border-red-500/70 hover:bg-red-500/10 cursor-pointer transition group relative">
+        <!-- Pending -->
+        <div onclick="showDecisionBreakdown('Pending')" class="bg-slate-900/60 p-2.5 rounded-lg border border-red-500/30 hover:border-red-500/80 hover:bg-red-500/10 cursor-pointer transition group">
           <div class="flex items-center justify-between">
             <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-red-300">
               <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i> Pending
             </p>
-            <span class="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded font-medium border border-red-500/30">Lihat Top 10</span>
+            <span class="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded font-medium border border-red-500/30">Breakdown</span>
           </div>
           <p id="statWajibPending" class="text-lg font-bold text-red-400 mt-0.5">0</p>
         </div>
 
-        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-500/20">
-          <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
-            <i class="fa-solid fa-user-xmark text-slate-400 text-[10px]"></i> Non Survey
-          </p>
+        <!-- Non Survey -->
+        <div onclick="showDecisionBreakdown('Non Survey')" class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-500/30 hover:border-slate-400 hover:bg-slate-700/40 cursor-pointer transition group">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-400 flex items-center gap-1 font-medium group-hover:text-slate-200">
+              <i class="fa-solid fa-user-xmark text-slate-400 text-[10px]"></i> Non Survey
+            </p>
+            <span class="text-[9px] bg-slate-500/20 text-slate-300 px-1.5 py-0.5 rounded font-medium border border-slate-500/30">Breakdown</span>
+          </div>
           <p id="statNonSurvey" class="text-lg font-bold text-slate-300 mt-0.5">0</p>
         </div>
       </div>
@@ -212,6 +221,46 @@
     </div>
   </section>
 
+  <!-- POPUP MODAL BREAKDOWN DECISION FINAL (NEW) -->
+  <div id="decisionModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+        <div>
+          <h3 id="decisionModalTitle" class="text-lg font-bold text-blue-400">Breakdown Decision Final</h3>
+          <p id="decisionModalSub" class="text-xs text-slate-400">Rincian status keputusan akhir debitur</p>
+        </div>
+        <button onclick="closeModal('decisionModal')" class="text-slate-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Ringkasan Angka Card -->
+      <div id="decisionSummaryCards" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <!-- Render via JS -->
+      </div>
+
+      <div class="overflow-x-auto max-h-80">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
+            <tr>
+              <th class="p-2.5">#</th>
+              <th class="p-2.5">Nama Debitur</th>
+              <th class="p-2.5">Marketing</th>
+              <th class="p-2.5">Lokasi</th>
+              <th class="p-2.5">Decision Final</th>
+            </tr>
+          </thead>
+          <tbody id="decisionModalTableBody" class="divide-y divide-slate-700">
+            <!-- Render via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="closeModal('decisionModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- POPUP MODAL BREAKDOWN LOKASI -->
   <div id="locationModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
@@ -239,41 +288,6 @@
       </div>
       <div class="mt-4 flex justify-end">
         <button onclick="closeModal('locationModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- POPUP MODAL TOP 10 CUSTOMER PENDING TERLAMA -->
-  <div id="pendingModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
-      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-        <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
-          <i class="fa-solid fa-clock-rotate-left"></i> Top 10 Customer Pending Terlama
-        </h3>
-        <button onclick="closeModal('pendingModal')" class="text-slate-400 hover:text-white text-xl">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="overflow-x-auto max-h-96">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
-            <tr>
-              <th class="p-2.5">#</th>
-              <th class="p-2.5">Nama Debitur</th>
-              <th class="p-2.5">Marketing</th>
-              <th class="p-2.5">Lokasi</th>
-              <th class="p-2.5">Aplikasi Out</th>
-              <th class="p-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody id="pendingModalTableBody" class="divide-y divide-slate-700">
-            <!-- Render via JS -->
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-4 flex justify-between items-center border-t border-slate-700/80 pt-3">
-        <span class="text-xs text-slate-400">* Diurutkan berdasarkan Tahun & Bulan Aplikasi Out terlama.</span>
-        <button onclick="closeModal('pendingModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
@@ -392,7 +406,6 @@
           }
         }
 
-        // TANGGAL SURVEY PROJECT: JIKA KOSONG / '-' TAMPILKAN 'Pending'
         let tglSurveyProj = 'Pending';
         if (formattedDateField && formattedDateField.trim() !== '' && formattedDateField.trim() !== '-') {
           tglSurveyProj = formattedDateField.trim();
@@ -432,19 +445,16 @@
 
         let noVal = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || (i + 1);
 
-        // BACA NO CRM DARI KOLOM E (INDEX 4)
         let crmNoVal = '-';
         if (4 < numCols) {
           crmNoVal = dataTable.getFormattedValue(i, 4) || dataTable.getValue(i, 4) || '-';
         }
 
-        // DECISION FINAL: KOLOM AQ (INDEX 42)
         let decisionFinalVal = '-';
         if (42 < numCols) {
           decisionFinalVal = dataTable.getFormattedValue(i, 42) || dataTable.getValue(i, 42) || '-';
         }
 
-        // BACA LINK DOCUMENT PDF DARI KOLOM BM (INDEX 64)
         let docLinkVal = '-';
         if (64 < numCols) {
           const rawBM = dataTable.getValue(i, 64) || dataTable.getFormattedValue(i, 64) || '';
@@ -479,7 +489,6 @@
           }
         }
 
-        // TANGGAL SURVEY PROJECT: KOLOM Y (INDEX 24)
         let tglProjectVal = '';
         if (24 < numCols) {
           tglProjectVal = dataTable.getFormattedValue(i, 24) || dataTable.getValue(i, 24) || '';
@@ -496,7 +505,6 @@
           computedStatus = 'Non Survey';
         }
 
-        // LOKASI PROJECT: KOLOM AB (INDEX 27)
         let lokasiProjectVal = '';
         for (let lCol of [27, 26, 28, 24, 25]) {
           if (lCol < numCols) {
@@ -509,7 +517,6 @@
         }
         if (!lokasiProjectVal) lokasiProjectVal = '-';
 
-        // APLIKASI OUT: KOLOM AE (INDEX 30) & AF (INDEX 31)
         let rawAE = (30 < numCols) ? (dataTable.getFormattedValue(i, 30) || dataTable.getValue(i, 30) || '') : '';
         let rawAF = (31 < numCols) ? (dataTable.getFormattedValue(i, 31) || dataTable.getValue(i, 31) || '') : '';
 
@@ -535,7 +542,6 @@
           }
         }
 
-        // TIME PROCESS
         let timeProcessVal = '-';
         if (tglProjectVal && strOut && tglProjectVal !== '-' && strOut !== '-') {
           const dateSurvey = new Date(tglProjectVal);
@@ -651,7 +657,6 @@
         );
       }
 
-      // AKSI FITUR SEARCHING INPUT
       if (searchQuery) {
         currentFilteredTracking = currentFilteredTracking.filter(i => 
           i.no.toString().toLowerCase().includes(searchQuery) ||
@@ -763,28 +768,78 @@
       }
     }
 
-    function showPendingModal() {
-      const pendingItems = currentFilteredTracking.filter(i => i.statusSurvey === 'Pending' && !i.isNonSurvey);
-      const sortedPending = pendingItems.sort((a, b) => a.sortScore - b.sortScore).slice(0, 10);
+    // FUNGSIONALITAS BARU: SHOW DECISION BREAKDOWN MODAL
+    function showDecisionBreakdown(categoryTarget) {
+      let items = [];
+      let titleText = "";
 
-      const modalBody = document.getElementById('pendingModalTableBody');
+      if (categoryTarget === 'Completed') {
+        items = currentFilteredTracking.filter(i => i.statusSurvey === 'Completed' && !i.isNonSurvey);
+        titleText = "Completed (Done)";
+      } else if (categoryTarget === 'Pending') {
+        items = currentFilteredTracking.filter(i => i.statusSurvey === 'Pending' && !i.isNonSurvey);
+        titleText = "Pending Survey";
+      } else if (categoryTarget === 'Non Survey') {
+        items = currentFilteredTracking.filter(i => i.isNonSurvey);
+        titleText = "Non Survey";
+      }
 
-      if (sortedPending.length === 0) {
-        modalBody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-slate-500">Tidak ada debitur pending.</td></tr>`;
+      let countApprove = 0;
+      let countReject = 0;
+      let countOther = 0;
+
+      items.forEach(i => {
+        const dec = (i.decisionFinal || '').toLowerCase();
+        if (dec.includes('approve')) {
+          countApprove++;
+        } else if (dec.includes('reject') || dec.includes('cancel')) {
+          countReject++;
+        } else {
+          countOther++;
+        }
+      });
+
+      document.getElementById('decisionModalTitle').innerText = `Breakdown Decision Final: ${titleText}`;
+      document.getElementById('decisionModalSub').innerText = `Total Kategori: ${items.length} Record`;
+
+      // Render Summary Cards
+      const summaryContainer = document.getElementById('decisionSummaryCards');
+      summaryContainer.innerHTML = `
+        <div class="bg-slate-900/80 p-3 rounded-lg border border-blue-500/30">
+          <p class="text-[10px] text-slate-400 font-semibold uppercase">Total Data</p>
+          <p class="text-xl font-extrabold text-blue-400 mt-0.5">${items.length}</p>
+        </div>
+        <div class="bg-slate-900/80 p-3 rounded-lg border border-emerald-500/30">
+          <p class="text-[10px] text-slate-400 font-semibold uppercase">Approve</p>
+          <p class="text-xl font-extrabold text-emerald-400 mt-0.5">${countApprove}</p>
+        </div>
+        <div class="bg-slate-900/80 p-3 rounded-lg border border-red-500/30">
+          <p class="text-[10px] text-slate-400 font-semibold uppercase">Reject / Cancel</p>
+          <p class="text-xl font-extrabold text-red-400 mt-0.5">${countReject}</p>
+        </div>
+        <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-500/30">
+          <p class="text-[10px] text-slate-400 font-semibold uppercase">Lainnya / -</p>
+          <p class="text-xl font-extrabold text-slate-300 mt-0.5">${countOther}</p>
+        </div>
+      `;
+
+      // Render Table Data
+      const tableBody = document.getElementById('decisionModalTableBody');
+      if (items.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data untuk kategori ini.</td></tr>`;
       } else {
-        modalBody.innerHTML = sortedPending.map((item, idx) => `
+        tableBody.innerHTML = items.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 text-slate-300">
-            <td class="p-2.5 font-bold text-red-400">#${idx + 1}</td>
+            <td class="p-2.5 font-bold text-blue-400">#${idx + 1}</td>
             <td class="p-2.5 font-semibold text-white">${item.debitur}</td>
             <td class="p-2.5 text-blue-300">${item.marketing}</td>
             <td class="p-2.5 text-emerald-300">${item.lokasiProject}</td>
-            <td class="p-2.5 font-semibold text-emerald-400">${item.aplikasiOut}</td>
-            <td class="p-2.5">${getStatusBadge('Pending')}</td>
+            <td class="p-2.5">${getDecisionBadge(item.decisionFinal)}</td>
           </tr>
         `).join('');
       }
 
-      document.getElementById('pendingModal').classList.remove('hidden');
+      document.getElementById('decisionModal').classList.remove('hidden');
     }
 
     function showLocationBreakdown(encodedLocationKey) {
