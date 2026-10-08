@@ -392,6 +392,12 @@
           }
         }
 
+        // TANGGAL SURVEY PROJECT: JIKA KOSONG / '-' TAMPILKAN 'Pending'
+        let tglSurveyProj = 'Pending';
+        if (formattedDateField && formattedDateField.trim() !== '' && formattedDateField.trim() !== '-') {
+          tglSurveyProj = formattedDateField.trim();
+        }
+
         const item = {
           inputDate: formatDate(rawInputDate) || rawInputDate,
           marketing: dataTable.getValue(i, 1) || '-',
@@ -399,7 +405,7 @@
           kota: dataTable.getValue(i, 7) || '',
           kabupaten: dataTable.getValue(i, 8) || '',
           requestDate: dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '',
-          surveyDateField: formattedDateField || '-',
+          surveyDateField: tglSurveyProj,
           timeProcess: timeProc,
           statusSurvey: statusSurveyVal,
           aplikasiOut: '-'
@@ -698,7 +704,7 @@
             <td class="p-3 font-semibold text-white">${item.customer}</td>
             <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
             <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
-            <td class="p-3 text-slate-200 font-medium">${item.surveyDateField || '-'}</td>
+            <td class="p-3 text-slate-200 font-medium">${item.surveyDateField}</td>
             <td class="p-3 text-amber-300 font-semibold">${item.timeProcess || '-'}</td>
             <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
@@ -732,7 +738,7 @@
         `).join('');
       }
 
-      // 3. Tracking Debitur Table (DENGAN NO CRM)
+      // 3. Tracking Debitur Table
       const historyBody = document.getElementById('historyTableBody');
 
       if (currentFilteredTracking.length > 0) {
