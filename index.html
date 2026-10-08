@@ -330,6 +330,9 @@
 
     function getStatusBadge(status) {
       const s = (status || 'On Process').toString().trim();
+      if (s === '-') {
+        return `<span class="text-slate-500 font-medium">-</span>`;
+      }
       if (s.toLowerCase().includes('hari') || !isNaN(parseInt(s))) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">On Process</span>`;
       }
@@ -507,15 +510,28 @@
           tglProjectVal = dataTable.getFormattedValue(i, 24) || dataTable.getValue(i, 24) || '';
         }
 
+        let statusSurveyFromSheet = '';
+        if (25 < numCols) {
+          statusSurveyFromSheet = dataTable.getFormattedValue(i, 25) || dataTable.getValue(i, 25) || '';
+        }
+
         let formattedSurveyDate = formatDate(tglProjectVal);
 
         let computedStatus = 'Pending';
-        if (tglProjectVal && tglProjectVal.toString().trim() !== '' && tglProjectVal.toString().trim() !== '-') {
-          computedStatus = 'Completed';
+        if (statusSurveyFromSheet && statusSurveyFromSheet.toString().trim() !== '' && statusSurveyFromSheet.toString().trim() !== '-') {
+          computedStatus = statusSurveyFromSheet.toString().trim();
+        } else if (tglProjectVal && tglProjectVal.toString().trim() !== '' && tglProjectVal.toString().trim() !== '-') {
+          computedStatus = formattedSurveyDate || tglProjectVal.toString().trim();
         }
 
         if (isNonSurvey) {
           computedStatus = 'Non Survey';
+        }
+
+        // BILA DECISION FINAL BERISI REJECT ATAU CANCEL, STATUS SURVEY MENJADI '-'
+        const decLower = decisionFinalVal.toLowerCase();
+        if (decLower.includes('reject') || decLower.includes('cancel')) {
+          computedStatus = '-';
         }
 
         let lokasiProjectVal = '';
@@ -575,7 +591,7 @@
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           kategoriSurvey: isNonSurvey ? 'Non Survey' : 'Wajib Survey',
-          tglSurveyProject: formattedSurveyDate || (computedStatus === 'Completed' ? tglProjectVal : '-'),
+          tglSurveyProject: formattedSurveyDate || (computedStatus.toLowerCase() === 'done' || computedStatus.toLowerCase() === 'completed' ? tglProjectVal : '-'),
           timeProcess: timeProcessVal,
           statusSurvey: computedStatus,
           decisionFinal: decisionFinalVal,
@@ -648,7 +664,6 @@
         currentFilteredTracking = currentFilteredTracking.filter(i => i.lokasiProject === selectedLocation);
       }
 
-      // PERBAIKAN LOGIKA FILTER TAHUN STRICT MATCHING
       if (selectedTahun) {
         currentFilteredTracking = currentFilteredTracking.filter(i => {
           if (i.parsedYear && i.parsedYear === selectedTahun) return true;
@@ -690,7 +705,7 @@
         } else {
           if (t.statusSurvey === 'Completed') {
             wajibDone++;
-          } else {
+          } else if (t.statusSurvey === 'Pending') {
             wajibPending++;
           }
         }
