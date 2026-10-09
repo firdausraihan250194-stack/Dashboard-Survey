@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Request Survey</title>
+  <title>Dashboard Monitoring Survey</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -13,7 +13,7 @@
   <!-- Header Section -->
   <header class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-slate-700 pb-4">
     <div>
-      <h1 class="text-2xl md:text-3xl font-bold text-blue-400">Dashboard Request Survey</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-blue-400">Dashboard Monitoring Survey</h1>
       <p class="text-sm text-slate-400">Monitoring Antrean Prioritas, Tracking Aplikasi & History Survey Real-Time</p>
     </div>
     <div class="flex items-center gap-4 mt-4 md:mt-0">
@@ -80,10 +80,10 @@
         </div>
       </div>
       
-      <!-- Sub-Box Status Interaktif Dua Header (Survey vs Non Survey) -->
+      <!-- Sub-Box Status Interaktif (Survey & Non Survey) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 pt-3 border-t border-slate-700/80">
         
-        <!-- HEADER 1: SURVEY -->
+        <!-- HEADER 1: SURVEY (Completed & Pending khusus Decision Approve) -->
         <div class="bg-slate-900/50 p-3 rounded-lg border border-blue-500/30">
           <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-700/60">
             <span class="text-xs font-bold text-blue-300 uppercase flex items-center gap-1.5">
@@ -100,10 +100,10 @@
               </div>
               <p id="statSurveyDone" class="text-base font-bold text-emerald-400 mt-0.5">0</p>
             </div>
-            <!-- Pending Survey -->
+            <!-- Pending Survey (Khusus Approve Only) -->
             <div onclick="showCategoryBreakdown('SurveyPending')" class="bg-slate-800 p-2 rounded border border-red-500/30 hover:border-red-500/80 hover:bg-red-500/10 cursor-pointer transition">
               <div class="flex items-center justify-between">
-                <p class="text-[10px] text-slate-400 font-medium">Pending</p>
+                <p class="text-[10px] text-slate-400 font-medium">Pending (Approve)</p>
                 <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i>
               </div>
               <p id="statSurveyPending" class="text-base font-bold text-red-400 mt-0.5">0</p>
@@ -111,30 +111,22 @@
           </div>
         </div>
 
-        <!-- HEADER 2: NON SURVEY -->
-        <div class="bg-slate-900/50 p-3 rounded-lg border border-amber-500/30">
+        <!-- HEADER 2: NON SURVEY (Hanya menampilkan Completed) -->
+        <div class="bg-slate-900/50 p-3 rounded-lg border border-amber-500/30 flex flex-col justify-between">
           <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-700/60">
             <span class="text-xs font-bold text-amber-300 uppercase flex items-center gap-1.5">
               <i class="fa-solid fa-user-slash text-amber-400"></i> NON SURVEY
             </span>
             <span id="statNonSurveyTotal" class="text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">0</span>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <!-- Completed Non Survey -->
-            <div onclick="showCategoryBreakdown('NonSurveyCompleted')" class="bg-slate-800 p-2 rounded border border-emerald-500/30 hover:border-emerald-500/80 hover:bg-emerald-500/10 cursor-pointer transition">
+          <div>
+            <!-- Completed Non Survey Only -->
+            <div onclick="showCategoryBreakdown('NonSurveyCompleted')" class="bg-slate-800 p-2.5 rounded border border-emerald-500/30 hover:border-emerald-500/80 hover:bg-emerald-500/10 cursor-pointer transition">
               <div class="flex items-center justify-between">
                 <p class="text-[10px] text-slate-400 font-medium">Completed</p>
                 <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i>
               </div>
               <p id="statNonSurveyDone" class="text-base font-bold text-emerald-400 mt-0.5">0</p>
-            </div>
-            <!-- Pending Non Survey -->
-            <div onclick="showCategoryBreakdown('NonSurveyPending')" class="bg-slate-800 p-2 rounded border border-red-500/30 hover:border-red-500/80 hover:bg-red-500/10 cursor-pointer transition">
-              <div class="flex items-center justify-between">
-                <p class="text-[10px] text-slate-400 font-medium">Pending</p>
-                <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i>
-              </div>
-              <p id="statNonSurveyPending" class="text-base font-bold text-red-400 mt-0.5">0</p>
             </div>
           </div>
         </div>
@@ -724,41 +716,40 @@
         );
       }
 
-      // VARIABEL DUA HEADER
+      // AKUMULASI DUA HEADER BERDASARKAN ATURAN BARU
       let surveyDone = 0;
-      let surveyPending = 0;
+      let surveyPendingApproveOnly = 0;
       let nonSurveyDone = 0;
-      let nonSurveyPending = 0;
 
       currentFilteredTracking.forEach(t => {
+        const decLower = (t.decisionFinal || '').toLowerCase();
+        
         if (!t.isNonSurvey) {
-          // Kategori Survey (Wajib Survey)
+          // Kategori Survey
           if (t.hasSurveyData) {
             surveyDone++;
-          } else {
-            surveyPending++;
+          } else if (decLower.includes('approve')) {
+            // HANYA DECISION APPROVE YANG DIHITUNG PENDING SURVEY
+            surveyPendingApproveOnly++;
           }
         } else {
           // Kategori Non Survey
           if (t.hasSurveyData) {
             nonSurveyDone++;
-          } else {
-            nonSurveyPending++;
           }
         }
       });
 
       document.getElementById('statTotalDebitur').innerText = currentFilteredTracking.length;
       
-      // Update Angka Card Header Survey
-      document.getElementById('statSurveyTotal').innerText = surveyDone + surveyPending;
+      // Card Header Survey
+      document.getElementById('statSurveyTotal').innerText = surveyDone + surveyPendingApproveOnly;
       document.getElementById('statSurveyDone').innerText = surveyDone;
-      document.getElementById('statSurveyPending').innerText = surveyPending;
+      document.getElementById('statSurveyPending').innerText = surveyPendingApproveOnly;
 
-      // Update Angka Card Header Non Survey
-      document.getElementById('statNonSurveyTotal').innerText = nonSurveyDone + nonSurveyPending;
+      // Card Header Non Survey (Hanya Completed)
+      document.getElementById('statNonSurveyTotal').innerText = nonSurveyDone;
       document.getElementById('statNonSurveyDone').innerText = nonSurveyDone;
-      document.getElementById('statNonSurveyPending').innerText = nonSurveyPending;
 
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
@@ -834,7 +825,7 @@
       }
     }
 
-    // FUNGSI BREAKDOWN BERDASARKAN INSTANT SUB-HEADER KLIK
+    // FUNGSI BREAKDOWN DATA MODAL BERDASARKAN KRITERIA BARU
     function showCategoryBreakdown(categoryType) {
       let items = [];
       let titleText = "";
@@ -843,14 +834,15 @@
         items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.hasSurveyData);
         titleText = "Survey - Completed";
       } else if (categoryType === 'SurveyPending') {
-        items = currentFilteredTracking.filter(i => !i.isNonSurvey && !i.hasSurveyData);
-        titleText = "Survey - Pending";
+        // HANYA MENGAMBIL SURVEY PENDING DENGAN DECISION FINAL APPROVE
+        items = currentFilteredTracking.filter(i => {
+          const dec = (i.decisionFinal || '').toLowerCase();
+          return !i.isNonSurvey && !i.hasSurveyData && dec.includes('approve');
+        });
+        titleText = "Survey - Pending (Approve Only)";
       } else if (categoryType === 'NonSurveyCompleted') {
         items = currentFilteredTracking.filter(i => i.isNonSurvey && i.hasSurveyData);
         titleText = "Non Survey - Completed";
-      } else if (categoryType === 'NonSurveyPending') {
-        items = currentFilteredTracking.filter(i => i.isNonSurvey && !i.hasSurveyData);
-        titleText = "Non Survey - Pending";
       }
 
       let countApprove = 0;
