@@ -83,12 +83,15 @@
       <!-- Sub-Box Status Interaktif (Survey & Non Survey) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 pt-3 border-t border-slate-700/80">
         
-        <!-- HEADER 1: SURVEY (Completed & Pending khusus Decision Approve) -->
+        <!-- HEADER 1: SURVEY (Decision Final: Approve) -->
         <div class="bg-slate-900/50 p-3 rounded-lg border border-blue-500/30">
           <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-700/60">
-            <span class="text-xs font-bold text-blue-300 uppercase flex items-center gap-1.5">
-              <i class="fa-solid fa-clipboard-check text-blue-400"></i> SURVEY
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-blue-300 uppercase flex items-center gap-1">
+                <i class="fa-solid fa-clipboard-check text-blue-400"></i> SURVEY
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal">(Decision Final: Approve)</span>
+            </div>
             <span id="statSurveyTotal" class="text-xs font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded">0</span>
           </div>
           <div class="grid grid-cols-2 gap-2">
@@ -100,10 +103,10 @@
               </div>
               <p id="statSurveyDone" class="text-base font-bold text-emerald-400 mt-0.5">0</p>
             </div>
-            <!-- Pending Survey (Khusus Approve Only) -->
+            <!-- Pending Survey (Teks Pending saja) -->
             <div onclick="showCategoryBreakdown('SurveyPending')" class="bg-slate-800 p-2 rounded border border-red-500/30 hover:border-red-500/80 hover:bg-red-500/10 cursor-pointer transition">
               <div class="flex items-center justify-between">
-                <p class="text-[10px] text-slate-400 font-medium">Pending (Approve)</p>
+                <p class="text-[10px] text-slate-400 font-medium">Pending</p>
                 <i class="fa-solid fa-clock-rotate-left text-red-400 text-[10px]"></i>
               </div>
               <p id="statSurveyPending" class="text-base font-bold text-red-400 mt-0.5">0</p>
@@ -111,12 +114,15 @@
           </div>
         </div>
 
-        <!-- HEADER 2: NON SURVEY (Hanya menampilkan Completed) -->
+        <!-- HEADER 2: NON SURVEY (Decision Final: Approve) -->
         <div class="bg-slate-900/50 p-3 rounded-lg border border-amber-500/30 flex flex-col justify-between">
           <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-700/60">
-            <span class="text-xs font-bold text-amber-300 uppercase flex items-center gap-1.5">
-              <i class="fa-solid fa-user-slash text-amber-400"></i> NON SURVEY
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-amber-300 uppercase flex items-center gap-1">
+                <i class="fa-solid fa-user-slash text-amber-400"></i> NON SURVEY
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal">(Decision Final: Approve)</span>
+            </div>
             <span id="statNonSurveyTotal" class="text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">0</span>
           </div>
           <div>
@@ -532,11 +538,9 @@
           keteranganSurveyVal = dataTable.getFormattedValue(i, 25) || dataTable.getValue(i, 25) || '';
         }
 
-        // KOLOM AA (INDEX 26): STATUS SURVEY
-        let statusSurveyVal = '';
-        if (26 < numCols) {
-          statusSurveyVal = dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '';
-        }
+        // PERIKSA KOLOM W (INDEX 22) DAN KOLOM AA (INDEX 26) UNTUK NON SURVEY
+        let keteranganW = (22 < numCols) ? (dataTable.getFormattedValue(i, 22) || dataTable.getValue(i, 22) || '') : '';
+        let statusAA = (26 < numCols) ? (dataTable.getFormattedValue(i, 26) || dataTable.getValue(i, 26) || '') : '';
 
         let formattedSurveyDate = formatDate(tglProjectVal);
 
@@ -552,7 +556,8 @@
           hasSurveyData = true;
         }
 
-        let isNonSurvey = statusSurveyVal.toLowerCase().includes('non survey');
+        // PERIKSA APABILA TERMASUK CATEGORY NON SURVEY
+        let isNonSurvey = keteranganW.toLowerCase().includes('non survey') || statusAA.toLowerCase().includes('non survey');
 
         let lokasiProjectVal = '';
         for (let lCol of [27, 26, 28, 24, 25]) {
@@ -612,7 +617,7 @@
           isNonSurvey: isNonSurvey,
           hasSurveyData: hasSurveyData,
           keteranganSurvey: displayKeteranganSurvey,
-          statusSurvey: statusSurveyVal || (isNonSurvey ? 'Non Survey' : 'Wajib Survey'),
+          statusSurvey: statusAA || (isNonSurvey ? 'Non Survey' : 'Wajib Survey'),
           tglSurveyProject: formattedSurveyDate || (hasSurveyData ? tglProjectVal : '-'),
           timeProcess: timeProcessVal,
           decisionFinal: decisionFinalVal,
@@ -716,7 +721,6 @@
         );
       }
 
-      // AKUMULASI DUA HEADER BERDASARKAN ATURAN BARU
       let surveyDone = 0;
       let surveyPendingApproveOnly = 0;
       let nonSurveyDone = 0;
@@ -729,12 +733,11 @@
           if (t.hasSurveyData) {
             surveyDone++;
           } else if (decLower.includes('approve')) {
-            // HANYA DECISION APPROVE YANG DIHITUNG PENDING SURVEY
             surveyPendingApproveOnly++;
           }
         } else {
-          // Kategori Non Survey
-          if (t.hasSurveyData) {
+          // Kategori Non Survey: Hitung semua yang Approve ATAU yang Kolom Y/Z terisi
+          if (decLower.includes('approve') || t.hasSurveyData) {
             nonSurveyDone++;
           }
         }
@@ -825,7 +828,6 @@
       }
     }
 
-    // FUNGSI BREAKDOWN DATA MODAL BERDASARKAN KRITERIA BARU
     function showCategoryBreakdown(categoryType) {
       let items = [];
       let titleText = "";
@@ -834,14 +836,16 @@
         items = currentFilteredTracking.filter(i => !i.isNonSurvey && i.hasSurveyData);
         titleText = "Survey - Completed";
       } else if (categoryType === 'SurveyPending') {
-        // HANYA MENGAMBIL SURVEY PENDING DENGAN DECISION FINAL APPROVE
         items = currentFilteredTracking.filter(i => {
           const dec = (i.decisionFinal || '').toLowerCase();
           return !i.isNonSurvey && !i.hasSurveyData && dec.includes('approve');
         });
-        titleText = "Survey - Pending (Approve Only)";
+        titleText = "Survey - Pending";
       } else if (categoryType === 'NonSurveyCompleted') {
-        items = currentFilteredTracking.filter(i => i.isNonSurvey && i.hasSurveyData);
+        items = currentFilteredTracking.filter(i => {
+          const dec = (i.decisionFinal || '').toLowerCase();
+          return i.isNonSurvey && (dec.includes('approve') || i.hasSurveyData);
+        });
         titleText = "Non Survey - Completed";
       }
 
