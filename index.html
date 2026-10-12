@@ -126,7 +126,7 @@
             <span id="statNonSurveyTotal" class="text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">0</span>
           </div>
           <div>
-            <!-- Completed Non Survey Only (Jika Tgl Kantor/Project Terisi) -->
+            <!-- Completed Non Survey Only -->
             <div onclick="showCategoryBreakdown('NonSurveyCompleted')" class="bg-slate-800 p-2.5 rounded border border-emerald-500/30 hover:border-emerald-500/80 hover:bg-emerald-500/10 cursor-pointer transition">
               <div class="flex items-center justify-between">
                 <p class="text-[10px] text-slate-400 font-medium">Completed</p>
@@ -245,7 +245,7 @@
 
   <!-- POPUP MODAL BREAKDOWN DATA -->
   <div id="decisionModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative">
+    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-4xl w-full p-6 shadow-2xl relative">
       <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
         <div>
           <h3 id="decisionModalTitle" class="text-lg font-bold text-blue-400">Breakdown Data</h3>
@@ -269,6 +269,7 @@
               <th class="p-2.5">Nama Debitur</th>
               <th class="p-2.5">Marketing</th>
               <th class="p-2.5">Lokasi</th>
+              <th class="p-2.5">Product</th>
               <th class="p-2.5">Decision Final</th>
             </tr>
           </thead>
@@ -501,6 +502,12 @@
           crmNoVal = dataTable.getFormattedValue(i, 4) || dataTable.getValue(i, 4) || '-';
         }
 
+        // BACA KOLOM G (INDEX 6): PRODUCT (PP)
+        let productVal = '-';
+        if (6 < numCols) {
+          productVal = dataTable.getFormattedValue(i, 6) || dataTable.getValue(i, 6) || '-';
+        }
+
         let decisionFinalVal = '-';
         if (42 < numCols) {
           decisionFinalVal = dataTable.getFormattedValue(i, 42) || dataTable.getValue(i, 42) || '-';
@@ -622,6 +629,7 @@
           inputDate: noVal,
           debitur: debiturName,
           noCRM: crmNoVal,
+          product: productVal,
           marketing: (7 < numCols) ? (dataTable.getValue(i, 7) || '-') : '-',
           isNonSurvey: isNonSurvey,
           hasSurveyData: hasSurveyData,
@@ -720,6 +728,7 @@
           i.marketing.toLowerCase().includes(searchQuery) ||
           i.debitur.toLowerCase().includes(searchQuery) ||
           i.noCRM.toLowerCase().includes(searchQuery) ||
+          i.product.toLowerCase().includes(searchQuery) ||
           i.lokasiProject.toLowerCase().includes(searchQuery) ||
           i.aplikasiOut.toLowerCase().includes(searchQuery) ||
           i.keteranganSurvey.toLowerCase().includes(searchQuery) ||
@@ -908,7 +917,7 @@
 
       const tableBody = document.getElementById('decisionModalTableBody');
       if (items.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data untuk kategori ini.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-slate-500">Tidak ada data untuk kategori ini.</td></tr>`;
       } else {
         tableBody.innerHTML = items.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 text-slate-300">
@@ -916,6 +925,7 @@
             <td class="p-2.5 font-semibold text-white">${item.debitur}</td>
             <td class="p-2.5 text-blue-300">${item.marketing}</td>
             <td class="p-2.5 text-emerald-300">${item.lokasiProject}</td>
+            <td class="p-2.5 text-amber-300 font-semibold">${item.product}</td>
             <td class="p-2.5">${getDecisionBadge(item.decisionFinal)}</td>
           </tr>
         `).join('');
