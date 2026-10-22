@@ -173,14 +173,15 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-700 text-slate-300 uppercase">
             <tr>
-              <th class="p-3">#</th>
-              <th class="p-3">Input Date</th>
-              <th class="p-3">Nama Customer</th>
-              <th class="p-3">Lokasi Project</th>
-              <th class="p-3">Request Tanggal</th>
-              <th class="p-3">Tgl Survey Project</th>
-              <th class="p-3">Time Process</th>
-              <th class="p-3">Status Survey</th>
+              <th class="p-2.5">#</th>
+              <th class="p-2.5">Input Date</th>
+              <th class="p-2.5">Nama Customer</th>
+              <th class="p-2.5">Lokasi Project</th>
+              <th class="p-2.5">Request Tanggal</th>
+              <th class="p-2.5">Tgl Survey Project</th>
+              <th class="p-2.5">Time Process</th>
+              <th class="p-2.5">Status Survey</th>
+              <th class="p-2.5">Progres Survey</th>
             </tr>
           </thead>
           <tbody id="top10TableBody" class="divide-y divide-slate-700">
@@ -372,12 +373,28 @@
       if (s === '' || s === '-') {
         return `<span class="text-slate-500 font-medium">-</span>`;
       }
-      if (s.toLowerCase().includes('non survey') || s.toLowerCase().includes('tanpa')) {
+      if (s.toLowerCase() === 'done' || s.toLowerCase() === 'completed') {
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+      } else if (s.toLowerCase().includes('non survey') || s.toLowerCase().includes('tanpa')) {
         return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Non Survey</span>`;
       } else if (s.toLowerCase().includes('wajib')) {
         return `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-medium">Wajib Survey</span>`;
       } else {
         return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${s}</span>`;
+      }
+    }
+
+    function getProgresBadge(progres) {
+      const p = (progres || '-').toString().trim();
+      if (p === '' || p === '-') {
+        return `<span class="text-slate-500 font-medium">-</span>`;
+      }
+      if (p.toLowerCase().includes('on schedule')) {
+        return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${p}</span>`;
+      } else if (p.toLowerCase().includes('reschedule')) {
+        return `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${p}</span>`;
+      } else {
+        return `<span class="bg-slate-500/20 text-slate-300 border border-slate-500/30 px-2 py-0.5 rounded text-[10px] font-medium">${p}</span>`;
       }
     }
 
@@ -436,31 +453,27 @@
         if (!customerName || customerName.toString().trim() === '' || customerName.toLowerCase() === 'nama customer') continue;
 
         const rawInputDate = dataTable.getFormattedValue(i, 0) || dataTable.getValue(i, 0) || '';
-        const rawDateField = dataTable.getFormattedValue(i, 12) || dataTable.getValue(i, 12) || '';
-        const formattedDateField = formatDate(rawDateField);
+        
+        // Kolom L (Index 11): Request Tanggal
+        const rawReqDate = dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '';
+        const formattedReqDate = formatDate(rawReqDate) || rawReqDate;
 
-        let statusSurveyVal = 'On Process';
-        const val11 = dataTable.getValue(i, 11) ? dataTable.getValue(i, 11).toString() : '';
-        const val13 = dataTable.getValue(i, 13) ? dataTable.getValue(i, 13).toString() : '';
+        // Kolom N (Index 13): Tanggal Survey (Field)
+        const rawSurveyDate = dataTable.getFormattedValue(i, 13) || dataTable.getValue(i, 13) || '';
+        const formattedSurveyDate = formatDate(rawSurveyDate) || rawSurveyDate;
 
-        if (val11 && !val11.includes('202')) {
-          statusSurveyVal = val11.trim();
-        } else if (val13 && !val13.includes('hari')) {
-          statusSurveyVal = val13.trim();
-        }
+        // Kolom O (Index 14): Time Process
+        let timeProc = (dataTable.getFormattedValue(i, 14) || dataTable.getValue(i, 14) || '-').toString().trim();
 
-        let timeProc = '-';
-        if (rawDateField && rawInputDate) {
-          const d1 = new Date(rawInputDate);
-          const d2 = new Date(rawDateField);
-          if (!isNaN(d1) && !isNaN(d2)) {
-            timeProc = `${Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24))} Hari`;
-          }
-        }
+        // Kolom P (Index 15): Status Survey
+        let statusSurveyVal = (dataTable.getFormattedValue(i, 15) || dataTable.getValue(i, 15) || 'On Process').toString().trim();
+
+        // Kolom Q (Index 16): Progres Survey
+        let progresSurveyVal = (dataTable.getFormattedValue(i, 16) || dataTable.getValue(i, 16) || '-').toString().trim();
 
         let tglSurveyProj = 'Pending';
-        if (formattedDateField && formattedDateField.trim() !== '' && formattedDateField.trim() !== '-') {
-          tglSurveyProj = formattedDateField.trim();
+        if (formattedSurveyDate && formattedSurveyDate.trim() !== '' && formattedSurveyDate.trim() !== '-') {
+          tglSurveyProj = formattedSurveyDate.trim();
         }
 
         const item = {
@@ -469,10 +482,11 @@
           customer: customerName,
           kota: dataTable.getValue(i, 7) || '',
           kabupaten: dataTable.getValue(i, 8) || '',
-          requestDate: dataTable.getFormattedValue(i, 11) || dataTable.getValue(i, 11) || '',
+          requestDate: formattedReqDate,
           surveyDateField: tglSurveyProj,
           timeProcess: timeProc,
           statusSurvey: statusSurveyVal,
+          progresSurvey: progresSurveyVal,
           aplikasiOut: '-'
         };
 
@@ -786,18 +800,19 @@
       const top10Body = document.getElementById('top10TableBody');
 
       if (top10Active.length === 0) {
-        top10Body.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
+        top10Body.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
       } else {
         top10Body.innerHTML = top10Active.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 transition">
-            <td class="p-3 font-bold text-amber-400">#${idx + 1}</td>
-            <td class="p-3 text-slate-300">${item.inputDate}</td>
-            <td class="p-3 font-semibold text-white">${item.customer}</td>
-            <td class="p-3 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
-            <td class="p-3 text-slate-300">${formatDate(item.requestDate)}</td>
-            <td class="p-3 text-slate-200 font-medium">${item.surveyDateField}</td>
-            <td class="p-3 text-amber-300 font-semibold">${item.timeProcess || '-'}</td>
-            <td class="p-3">${getStatusBadge(item.statusSurvey)}</td>
+            <td class="p-2.5 font-bold text-amber-400">#${idx + 1}</td>
+            <td class="p-2.5 text-slate-300">${item.inputDate}</td>
+            <td class="p-2.5 font-semibold text-white">${item.customer}</td>
+            <td class="p-2.5 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
+            <td class="p-2.5 text-slate-300">${item.requestDate}</td>
+            <td class="p-2.5 text-slate-200 font-medium">${item.surveyDateField}</td>
+            <td class="p-2.5 text-amber-300 font-semibold">${item.timeProcess}</td>
+            <td class="p-2.5">${getStatusBadge(item.statusSurvey)}</td>
+            <td class="p-2.5">${getProgresBadge(item.progresSurvey)}</td>
           </tr>
         `).join('');
       }
@@ -952,7 +967,7 @@
             <td class="p-2.5 font-bold text-emerald-400">#${idx + 1}</td>
             <td class="p-2.5 font-medium text-white">${item.customer}</td>
             <td class="p-2.5 text-blue-300">${item.marketing}</td>
-            <td class="p-2.5">${formatDate(item.requestDate)}</td>
+            <td class="p-2.5">${item.requestDate}</td>
             <td class="p-2.5">${getStatusBadge(item.statusSurvey)}</td>
           </tr>
         `).join('');
