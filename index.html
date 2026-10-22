@@ -161,13 +161,13 @@
   <!-- Main Grid Section -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
-    <!-- Top 10 Priority Request Survey -->
+    <!-- Request Survey Debitur (5 Data Terlama) -->
     <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-amber-400">
-          <i class="fa-solid fa-list-ol mr-2"></i>Top 10 Priority Request Survey
+          <i class="fa-solid fa-list-ol mr-2"></i>Request Survey Debitur
         </h2>
-        <span class="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full border border-amber-500/30">Active Queue</span>
+        <span class="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full border border-amber-500/30">Top 5 Oldest Queue</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
@@ -175,8 +175,7 @@
             <tr>
               <th class="p-2.5">#</th>
               <th class="p-2.5">Input Date</th>
-              <th class="p-2.5">Nama Customer</th>
-              <th class="p-2.5">Lokasi Project</th>
+              <th class="p-2.5">Customer & Lokasi Project</th>
               <th class="p-2.5">Request Tanggal</th>
               <th class="p-2.5">Tgl Survey Project</th>
               <th class="p-2.5">Time Process</th>
@@ -184,21 +183,23 @@
               <th class="p-2.5">Progres Survey</th>
             </tr>
           </thead>
-          <tbody id="top10TableBody" class="divide-y divide-slate-700">
+          <tbody id="requestDebiturTableBody" class="divide-y divide-slate-700">
             <!-- Render via JS -->
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Top 10 Lokasi Request -->
+    <!-- History Data Customer Request Survey Debitur -->
     <div class="bg-slate-800 p-5 rounded-xl border border-slate-700">
       <h2 class="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
-        <i class="fa-solid fa-map-location-dot"></i>Top 10 Lokasi Request
+        <i class="fa-solid fa-clock-rotate-left"></i>History Data Customer Request Survey Debitur
       </h2>
-      <ul id="locationList" class="space-y-2 text-xs">
-        <!-- Render via JS -->
-      </ul>
+      <div class="overflow-y-auto max-h-[360px] pr-1">
+        <ul id="historyCustomerList" class="space-y-2 text-xs">
+          <!-- Render via JS -->
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -207,7 +208,7 @@
   <section class="mt-8 bg-slate-800 p-6 rounded-xl border border-slate-700">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
       <h2 class="text-lg font-bold text-blue-400 flex items-center gap-2">
-        <i class="fa-solid fa-clock-rotate-left"></i>Tracking Debitur
+        <i class="fa-solid fa-chart-line"></i>Tracking Debitur
       </h2>
       
       <!-- Input Search Interaktif -->
@@ -281,37 +282,6 @@
       </div>
       <div class="mt-4 flex justify-end">
         <button onclick="closeModal('decisionModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- POPUP MODAL BREAKDOWN LOKASI -->
-  <div id="locationModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl relative">
-      <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-        <h3 id="modalTitle" class="text-lg font-bold text-emerald-400">Breakdown Customer</h3>
-        <button onclick="closeModal('locationModal')" class="text-slate-400 hover:text-white text-xl">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="overflow-x-auto max-h-80">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
-            <tr>
-              <th class="p-2.5">#</th>
-              <th class="p-2.5">Nama Customer</th>
-              <th class="p-2.5">Marketing</th>
-              <th class="p-2.5">Request Tanggal</th>
-              <th class="p-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody id="modalTableBody" class="divide-y divide-slate-700">
-            <!-- Render via JS -->
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-4 flex justify-end">
-        <button onclick="closeModal('locationModal')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
@@ -476,12 +446,19 @@
           tglSurveyProj = formattedSurveyDate.trim();
         }
 
+        const kotaVal = dataTable.getValue(i, 7) || '';
+        const kabVal = dataTable.getValue(i, 8) || '';
+        let fullLokasi = kotaVal;
+        if (kabVal) fullLokasi += `, ${kabVal}`;
+
         const item = {
+          rawInputDateObj: new Date(rawInputDate),
           inputDate: formatDate(rawInputDate) || rawInputDate,
           marketing: dataTable.getValue(i, 1) || '-',
           customer: customerName,
-          kota: dataTable.getValue(i, 7) || '',
-          kabupaten: dataTable.getValue(i, 8) || '',
+          kota: kotaVal,
+          kabupaten: kabVal,
+          fullLokasi: fullLokasi,
           requestDate: formattedReqDate,
           surveyDateField: tglSurveyProj,
           timeProcess: timeProc,
@@ -795,19 +772,29 @@
 
       document.getElementById('statActiveTotal').innerText = filteredActive.length;
 
-      // 1. Top 10 Active Queue
-      const top10Active = filteredActive.slice(0, 10);
-      const top10Body = document.getElementById('top10TableBody');
+      // 1. Request Survey Debitur (5 Data Inputan Terlama)
+      const oldestActive5 = [...filteredActive]
+        .sort((a, b) => {
+          if (isNaN(a.rawInputDateObj) || isNaN(b.rawInputDateObj)) return 0;
+          return a.rawInputDateObj - b.rawInputDateObj;
+        })
+        .slice(0, 5);
 
-      if (top10Active.length === 0) {
-        top10Body.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
+      const reqDebiturBody = document.getElementById('requestDebiturTableBody');
+
+      if (oldestActive5.length === 0) {
+        reqDebiturBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500">Tidak ada request survey aktif.</td></tr>`;
       } else {
-        top10Body.innerHTML = top10Active.map((item, idx) => `
+        reqDebiturBody.innerHTML = oldestActive5.map((item, idx) => `
           <tr class="hover:bg-slate-700/50 transition">
             <td class="p-2.5 font-bold text-amber-400">#${idx + 1}</td>
             <td class="p-2.5 text-slate-300">${item.inputDate}</td>
-            <td class="p-2.5 font-semibold text-white">${item.customer}</td>
-            <td class="p-2.5 text-slate-300">${item.kota}${item.kabupaten ? ', ' + item.kabupaten : ''}</td>
+            <td class="p-2.5">
+              <div class="font-semibold text-white">${item.customer}</div>
+              <div class="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                <i class="fa-solid fa-location-dot text-[10px]"></i> ${item.fullLokasi}
+              </div>
+            </td>
             <td class="p-2.5 text-slate-300">${item.requestDate}</td>
             <td class="p-2.5 text-slate-200 font-medium">${item.surveyDateField}</td>
             <td class="p-2.5 text-amber-300 font-semibold">${item.timeProcess}</td>
@@ -817,29 +804,26 @@
         `).join('');
       }
 
-      // 2. Top 10 Lokasi
-      const locationMap = {};
-      globalActiveRequests.forEach(item => {
-        const locKey = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
-        if (!locationMap[locKey]) locationMap[locKey] = [];
-        locationMap[locKey].push(item);
+      // 2. History Data Customer Request Survey Debitur (Selesai Survey)
+      const completedHistoryList = globalAllHistoryRequests.filter(item => {
+        const st = item.statusSurvey.toLowerCase();
+        return st === 'done' || st === 'completed';
       });
 
-      const sortedLocations = Object.keys(locationMap)
-        .map(key => ({ location: key, count: locationMap[key].length }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
-
-      const locList = document.getElementById('locationList');
-      if (sortedLocations.length === 0) {
-        locList.innerHTML = `<li class="text-slate-500 text-xs">Belum ada data lokasi.</li>`;
+      const historyCustListEl = document.getElementById('historyCustomerList');
+      if (completedHistoryList.length === 0) {
+        historyCustListEl.innerHTML = `<li class="text-slate-500 text-xs p-2">Belum ada history customer yang selesai di survey.</li>`;
       } else {
-        locList.innerHTML = sortedLocations.map(loc => `
-          <li class="flex justify-between items-center bg-slate-700/40 p-2 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition">
-            <span class="text-slate-300 font-medium truncate">${loc.location}</span>
-            <button onclick="showLocationBreakdown('${encodeURIComponent(loc.location)}')" class="font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded text-[11px] transition flex items-center gap-1 cursor-pointer">
-              <i class="fa-solid fa-users text-[9px]"></i> ${loc.count} Request
-            </button>
+        historyCustListEl.innerHTML = completedHistoryList.map(item => `
+          <li class="bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition flex flex-col gap-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-white">${item.customer}</span>
+              ${getStatusBadge(item.statusSurvey)}
+            </div>
+            <div class="flex justify-between items-center text-[11px] text-slate-400">
+              <span class="text-emerald-300"><i class="fa-solid fa-map-pin text-[9px] mr-1"></i>${item.fullLokasi}</span>
+              <span>Survey: <strong class="text-slate-200">${item.surveyDateField}</strong></span>
+            </div>
           </li>
         `).join('');
       }
@@ -947,33 +931,6 @@
       }
 
       document.getElementById('decisionModal').classList.remove('hidden');
-    }
-
-    function showLocationBreakdown(encodedLocationKey) {
-      const locationKey = decodeURIComponent(encodedLocationKey);
-      const filteredItems = globalActiveRequests.filter(item => {
-        const key = item.kota ? `${item.kota}${item.kabupaten ? ' - ' + item.kabupaten : ''}` : 'Unknown';
-        return key === locationKey;
-      });
-
-      document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-map-pin mr-2"></i>Detail Customer: ${locationKey}`;
-      const modalBody = document.getElementById('modalTableBody');
-      
-      if (filteredItems.length === 0) {
-        modalBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500">Tidak ada data.</td></tr>`;
-      } else {
-        modalBody.innerHTML = filteredItems.map((item, idx) => `
-          <tr class="hover:bg-slate-700/50 text-slate-300">
-            <td class="p-2.5 font-bold text-emerald-400">#${idx + 1}</td>
-            <td class="p-2.5 font-medium text-white">${item.customer}</td>
-            <td class="p-2.5 text-blue-300">${item.marketing}</td>
-            <td class="p-2.5">${item.requestDate}</td>
-            <td class="p-2.5">${getStatusBadge(item.statusSurvey)}</td>
-          </tr>
-        `).join('');
-      }
-
-      document.getElementById('locationModal').classList.remove('hidden');
     }
 
     function closeModal(modalId) {
