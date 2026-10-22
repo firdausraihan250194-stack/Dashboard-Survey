@@ -196,7 +196,7 @@
         <i class="fa-solid fa-clock-rotate-left"></i>History Data Customer Request Survey Debitur
       </h2>
       <div class="overflow-y-auto max-h-[360px] pr-1">
-        <ul id="historyCustomerList" class="space-y-2 text-xs">
+        <ul id="historyCustomerList" class="space-y-2.5 text-xs">
           <!-- Render via JS -->
         </ul>
       </div>
@@ -459,7 +459,7 @@
           kota: kotaVal,
           kabupaten: kabVal,
           fullLokasi: fullLokasi,
-          requestDate: formattedReqDate,
+          requestDate: formattedReqDate || '-',
           surveyDateField: tglSurveyProj,
           timeProcess: timeProc,
           statusSurvey: statusSurveyVal,
@@ -676,7 +676,7 @@
 
       filterTahunSelect.innerHTML = '<option value="">Tahun</option>';
       Array.from(years).sort().reverse().forEach(yr => {
-        filterTahunSelect.innerHTML += `<option value="${yr}">${yr}</option>`;
+        filterTahunSelect.innerHTML += `<option value="${yr}">${yr}">${yr}</option>`;
       });
 
       if (currentYearVal && years.has(currentYearVal)) {
@@ -804,7 +804,7 @@
         `).join('');
       }
 
-      // 2. History Data Customer Request Survey Debitur (Selesai Survey)
+      // 2. History Data Customer Request Survey Debitur (Menampilkan Perbandingan Request Date & Survey Field Date)
       const completedHistoryList = globalAllHistoryRequests.filter(item => {
         const st = item.statusSurvey.toLowerCase();
         return st === 'done' || st === 'completed';
@@ -815,14 +815,26 @@
         historyCustListEl.innerHTML = `<li class="text-slate-500 text-xs p-2">Belum ada history customer yang selesai di survey.</li>`;
       } else {
         historyCustListEl.innerHTML = completedHistoryList.map(item => `
-          <li class="bg-slate-700/40 p-2.5 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition flex flex-col gap-1">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-white">${item.customer}</span>
+          <li class="bg-slate-700/40 p-3 rounded-lg border border-slate-700/60 hover:border-emerald-500/40 transition flex flex-col gap-2">
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <span class="font-bold text-white text-xs block">${item.customer}</span>
+                <span class="text-emerald-300 text-[11px] flex items-center gap-1 mt-0.5">
+                  <i class="fa-solid fa-map-pin text-[9px]"></i>${item.fullLokasi}
+                </span>
+              </div>
               ${getStatusBadge(item.statusSurvey)}
             </div>
-            <div class="flex justify-between items-center text-[11px] text-slate-400">
-              <span class="text-emerald-300"><i class="fa-solid fa-map-pin text-[9px] mr-1"></i>${item.fullLokasi}</span>
-              <span>Survey: <strong class="text-slate-200">${item.surveyDateField}</strong></span>
+            <!-- Rincian Tanggal Request vs Tanggal Survey Field -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-800/80 p-2 rounded border border-slate-700 text-[10px] mt-0.5">
+              <div>
+                <span class="text-slate-400 block font-medium">Req. Tanggal:</span>
+                <span class="text-amber-300 font-semibold">${item.requestDate}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block font-medium">Tgl Survey (Field):</span>
+                <span class="text-emerald-400 font-semibold">${item.surveyDateField}</span>
+              </div>
             </div>
           </li>
         `).join('');
